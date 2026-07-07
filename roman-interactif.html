@@ -95,6 +95,7 @@ header{
 /* PAGES */
 .pages{flex:1;overflow-y:auto;padding:1.4rem 1.3rem 1rem;-webkit-overflow-scrolling:touch}
 .pages::-webkit-scrollbar{width:0}
+.page-inner{max-width:620px;margin:0 auto;width:100%}
 
 .welcome{text-align:center;padding:3rem 1rem;max-width:300px;margin:auto}
 .welcome .q{font-size:2.2rem;margin-bottom:0.8rem}
@@ -112,10 +113,16 @@ header{
 .blk-roman{
   font-family:'Fraunces',serif;font-weight:400;
   font-size:1.14rem;line-height:1.72;color:var(--ink);
-  white-space:pre-wrap;letter-spacing:-0.003em;
+  letter-spacing:-0.003em;
 }
 .blk-roman p{margin-bottom:0.9rem}
 .blk-roman p:last-child{margin-bottom:0}
+/* Dialogue lines — dash + hanging indent, own line */
+.blk-roman p.dialogue{
+  padding-left:1.4em;text-indent:-1.4em;
+  margin-bottom:0.55rem;
+}
+.blk-roman p.dialogue .dash{color:var(--accent);font-weight:500}
 
 /* Character names — bold + color */
 .nom{color:var(--char);font-weight:600}
@@ -151,6 +158,7 @@ header{
 
 /* INPUT */
 .input-zone{padding:0.6rem 0.9rem max(0.6rem,env(safe-area-inset-bottom));flex-shrink:0;background:var(--bg)}
+.input-inner{max-width:620px;margin:0 auto;width:100%}
 .mode-tabs{display:flex;gap:0.4rem;margin-bottom:0.55rem}
 .mtab{flex:1;background:var(--bg-soft);border:1px solid transparent;color:var(--ink-soft);padding:0.5rem;border-radius:10px;font-size:0.75rem;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:0.3rem}
 .mtab.active[data-m="ecrire"]{background:var(--you-bg);color:var(--you);border-color:var(--you)}
@@ -233,6 +241,7 @@ header{
   <div class="progress"><div class="progress-bar" id="pbar"></div></div>
 
   <div class="pages" id="pages">
+   <div class="page-inner">
     <div class="welcome" id="welcome">
       <div class="q">🪶</div>
       <h1>À vous d'écrire</h1>
@@ -245,9 +254,11 @@ header{
       <div id="blocks"></div>
       <div class="typing" id="typing"><div class="d"></div><div class="d"></div><div class="d"></div></div>
     </div>
+   </div>
   </div>
 
   <div class="input-zone">
+   <div class="input-inner">
     <div class="mode-tabs" id="mode-tabs">
       <button class="mtab active" data-m="ecrire">✍︎ J'écris</button>
       <button class="mtab" data-m="consigne">✦ Consigne</button>
@@ -257,6 +268,7 @@ header{
       <button class="send" id="send">↑</button>
     </div>
     <div class="hint" id="hint">Champ vide + envoyer = l'IA continue seule</div>
+   </div>
   </div>
 </div>
 
@@ -272,6 +284,15 @@ header{
       <div class="leg"><span class="sw" style="background:var(--desc)"></span>Lieux &amp; descriptions</div>
       <div class="leg"><span class="sw" style="background:var(--you)"></span>Vos ajouts</div>
       <div class="leg"><span class="sw" style="background:var(--consigne)"></span>Vos consignes</div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-label">Longueur des réponses de l'IA</div>
+    <div class="pills" id="len">
+      <button class="pill active" data-l="court">Court</button>
+      <button class="pill" data-l="moyen">Moyen</button>
+      <button class="pill" data-l="long">Long</button>
     </div>
   </div>
 
@@ -315,7 +336,7 @@ header{
 const KEYS={api:'ev_gemini_key',story:'ev_story_v3',theme:'ev_theme'};
 let apiKey=localStorage.getItem(KEYS.api)||'';
 
-let state={genre:'Fantaisie',pov:'Troisième personne',chars:[],title:'',history:[],started:false};
+let state={genre:'Fantaisie',pov:'Troisième personne',length:'court',chars:[],title:'',history:[],started:false};
 
 function save(){try{localStorage.setItem(KEYS.story,JSON.stringify(state))}catch(e){}}
 function load(){try{const r=localStorage.getItem(KEYS.story);if(r){const s=JSON.parse(r);if(s&&typeof s==='object')state=Object.assign(state,s)}}catch(e){}}
@@ -348,7 +369,14 @@ function buildSys(){
   const cl=state.chars.length
     ? state.chars.map(c=>`- ${c.name} (${c.role})${c.desc?' : '+c.desc:''}`).join('\n')
     : '- Aucun personnage défini pour l\'instant (n\'en invente pas sans consigne claire).';
+  const lengthRule = {
+    court:'TRÈS IMPORTANT — LONGUEUR : écris COURT. Un seul paragraphe, 3 à 5 phrases maximum. Tu poses une scène ou fais avancer un seul moment, puis tu t\'arrêtes pour laisser le lecteur écrire la suite. N\'enchaîne jamais plusieurs événements. Ne termine pas l\'histoire à la place du lecteur.',
+    moyen:'LONGUEUR : écris 2 paragraphes maximum. Fais avancer un moment de la scène, puis arrête-toi pour laisser la main au lecteur.',
+    long:'LONGUEUR : 3 à 4 paragraphes développés, puis arrête-toi sur un moment ouvert.'
+  }[state.length||'court'];
   return `Tu es un véritable romancier francophone. Tu co-écris un roman avec le lecteur : il écrit une partie, tu enchaînes la suite comme deux auteurs qui se relaient. Tu ne dis jamais "en tant qu'IA", tu ne commentes jamais hors récit.
+
+${lengthRule}
 
 ═══ DEUX TYPES DE MESSAGES DU LECTEUR ═══
 Chaque message est précédé d'une balise entre crochets :
@@ -360,6 +388,12 @@ Dans TOUT ton texte de roman, tu dois baliser certains éléments avec ces marqu
 - Les NOMS des personnages : entoure-les de doubles astérisques. Exemple : **Elyan** avança vers **la Vieille Maren**.
 - Les DESCRIPTIONS d'ambiance, de lieux, d'objets ou d'atmosphère sensorielle importantes : entoure le passage de tildes. Exemple : ~La forêt exhalait une odeur de mousse humide et de résine froide.~
 N'abuse pas du balisage : marque les noms à chaque apparition, et seulement les passages descriptifs vraiment évocateurs (pas chaque phrase). N'utilise ces marqueurs QUE dans le roman, jamais ailleurs. N'utilise aucun autre symbole de formatage (pas de #, pas de listes).
+
+═══ MISE EN FORME DES DIALOGUES ═══
+Chaque réplique parlée commence par un tiret cadratin « — » et se place sur SA PROPRE LIGNE, séparée par un saut de ligne. Ne mets jamais deux répliques différentes à la suite sur la même ligne. Sépare l'action de la parole. Exemple :
+— Tu es en retard, souffla **Maren** sans lever les yeux.
+**Elyan** s'immobilisa sur le seuil.
+— Je sais. Pardon.
 
 GENRE : ${state.genre}
 POINT DE VUE (strict) : ${state.pov}
@@ -377,16 +411,17 @@ ROMANCE éventuelle : évolue lentement, par regards, silences, attentions et co
 RYTHME : alterne calme, dialogue, action, introspection ; ne précipite jamais vers un objectif.
 NARRATION : respecte strictement le point de vue ; ne révèle pas les pensées qu'il ne permet pas de connaître ; évite les répétitions de formulations.
 
-Longueur : 2 à 5 paragraphes développés. Tu écris uniquement le roman (ou la réponse à une consigne), avec le balisage couleur.`;
+Tu écris uniquement le roman (ou la réponse à une consigne), avec le balisage couleur. Respecte impérativement la contrainte de longueur indiquée en haut.`;
 }
 
 async function callGemini(msg,hidden,blockType){
   state.history.push({role:'user',text:msg,hidden:!!hidden,blockType:blockType||null});save();
   const contents=state.history.map(m=>({role:m.role,parts:[{text:m.text}]}));
   const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+  const maxTok={court:320,moyen:700,long:1200}[state.length||'court'];
   async function attempt(){
     return fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({system_instruction:{parts:[{text:buildSys()}]},contents,generationConfig:{maxOutputTokens:1600,temperature:0.95}})});
+      body:JSON.stringify({system_instruction:{parts:[{text:buildSys()}]},contents,generationConfig:{maxOutputTokens:maxTok,temperature:0.95}})});
   }
   let r=await attempt();
   if(r.status===429){await new Promise(x=>setTimeout(x,4000));r=await attempt()}
@@ -406,14 +441,27 @@ async function callGemini(msg,hidden,blockType){
 /* RENDER with color markup */
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 function markup(raw){
-  let h=esc(raw);
-  // **nom** -> character
-  h=h.replace(/\*\*([^*]+)\*\*/g,'<span class="nom">$1</span>');
-  // ~description~ -> ocre italic
-  h=h.replace(/~([^~]+)~/g,'<span class="descr">$1</span>');
-  // paragraphs
-  const paras=h.split(/\n{2,}/).map(p=>p.trim()).filter(Boolean);
-  return paras.map(p=>'<p>'+p.replace(/\n/g,'<br>')+'</p>').join('');
+  // Normalise : les répliques de dialogue passent sur leur propre ligne.
+  // On force un saut de paragraphe avant chaque tiret de dialogue.
+  let txt=raw.replace(/\r/g,'');
+  // Uniformise les différents tirets de dialogue en tiret cadratin
+  txt=txt.replace(/^[ \t]*[-–—]\s?/gm,'— ');
+  // Un tiret de dialogue en milieu de ligne -> nouveau paragraphe
+  txt=txt.replace(/([.!?…»"])\s+—\s/g,'$1\n\n— ');
+
+  const paras=txt.split(/\n{2,}/).map(p=>p.trim()).filter(Boolean);
+  return paras.map(p=>{
+    const isDlg=/^—\s/.test(p);
+    let h=esc(p);
+    h=h.replace(/\*\*([^*]+)\*\*/g,'<span class="nom">$1</span>');
+    h=h.replace(/~([^~]+)~/g,'<span class="descr">$1</span>');
+    h=h.replace(/\n/g,'<br>');
+    if(isDlg){
+      h=h.replace(/^—\s/,'<span class="dash">—</span> ');
+      return '<p class="dialogue">'+h+'</p>';
+    }
+    return '<p>'+h+'</p>';
+  }).join('');
 }
 
 function addBlock(txt,who){
@@ -435,6 +483,7 @@ function scrollDown(){const p=document.getElementById('pages');p.scrollTop=p.scr
 /* UI */
 document.getElementById('gg').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;document.querySelectorAll('#gg .pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.genre=b.dataset.g;updateSub();save()});
 document.getElementById('pv').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;document.querySelectorAll('#pv .pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.pov=b.dataset.p;updateSub();save()});
+document.getElementById('len').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;document.querySelectorAll('#len .pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.length=b.dataset.l;save()});
 function updateSub(){document.getElementById('s-sub').textContent=state.genre+' · '+state.pov}
 
 function openSheet(){document.getElementById('overlay').classList.add('on');document.getElementById('sheet').classList.add('on')}
@@ -551,6 +600,7 @@ document.getElementById('uinput').addEventListener('input',function(){this.style
 load();
 document.querySelectorAll('#gg .pill').forEach(b=>b.classList.toggle('active',b.dataset.g===state.genre));
 document.querySelectorAll('#pv .pill').forEach(b=>b.classList.toggle('active',b.dataset.p===state.pov));
+document.querySelectorAll('#len .pill').forEach(b=>b.classList.toggle('active',b.dataset.l===(state.length||'court')));
 renderChars();updateSub();
 if(state.started&&state.history.length){
   showStory();
