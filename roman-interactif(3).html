@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Encre Vivante">
+<title>Encre Vivante</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --ink:#1a1410;--parchment:#f5f0e8;--aged:#e8dfc8;
+  --sepia:#8b6914;--sepia-l:#c4922a;
+  --accent:#2c4a3e;--accent-s:#4a7c6f;
+  --muted:#6b5d4a;--paper:#faf7f2;
+  --danger:#8b3a3a;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Inter',sans-serif;background:var(--ink);color:var(--ink);display:flex;flex-direction:column}
+
+/* ── SETUP SCREEN ── */
+#setup-screen{position:fixed;inset:0;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;z-index:100;overflow-y:auto}
+#setup-screen.hidden{display:none}
+.setup-card{background:#1e1a14;border:1px solid #2e2820;border-radius:12px;padding:1.8rem;width:100%;max-width:380px}
+.setup-logo{font-size:2.5rem;text-align:center;margin-bottom:0.5rem}
+.setup-title{font-family:'Playfair Display',serif;color:var(--sepia-l);font-size:1.4rem;text-align:center;margin-bottom:0.3rem}
+.setup-sub{color:#5a4f40;font-size:0.72rem;text-align:center;letter-spacing:.12em;text-transform:uppercase;margin-bottom:1.5rem}
+.setup-label{color:#8a7a65;font-size:0.75rem;margin-bottom:0.4rem;display:block}
+.setup-hint{color:#5a4f40;font-size:0.7rem;margin-bottom:1rem;line-height:1.6}
+.setup-hint a{color:var(--sepia);text-decoration:underline}
+.setup-hint b{color:#8a7a65}
+#api-key-input{width:100%;background:#120f0a;border:1px solid #2e2820;color:var(--parchment);padding:0.7rem 1rem;border-radius:6px;font-size:0.85rem;font-family:'Inter',sans-serif;outline:none;margin-bottom:1rem}
+#api-key-input:focus{border-color:var(--sepia)}
+#api-key-input::placeholder{color:#3a3028}
+.setup-btn{width:100%;background:var(--accent);color:#c8e8e0;border:none;border-radius:6px;padding:0.8rem;font-size:0.9rem;cursor:pointer;font-family:'Playfair Display',serif;letter-spacing:.03em}
+.setup-btn:hover{background:var(--accent-s)}
+.setup-privacy{color:#3a3028;font-size:0.65rem;text-align:center;margin-top:1rem;line-height:1.5}
+.setup-error{color:#e07070;font-size:0.72rem;margin-bottom:0.8rem;display:none}
+.setup-error.on{display:block}
+
+/* ── MAIN APP ── */
+#app{display:none;flex-direction:column;height:100%}
+#app.visible{display:flex}
+header{background:var(--ink);padding:0.75rem 1rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #2e2820;flex-shrink:0}
+.logo-wrap{display:flex;align-items:center;gap:0.6rem}
+.logo-quill{font-size:1.3rem}
+.logo-text{font-family:'Playfair Display',serif;color:var(--sepia-l);font-size:1rem}
+.header-actions{display:flex;gap:0.5rem}
+.icon-btn{background:none;border:1px solid #2e2820;color:#5a4f40;width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.icon-btn:hover{border-color:var(--sepia);color:var(--sepia)}
+.save-dot{position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--accent-s);opacity:0;transition:opacity .3s}
+.save-dot.on{opacity:1}
+
+/* BOTTOM SHEET */
+.sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:50;display:none;backdrop-filter:blur(2px)}
+.sheet-overlay.open{display:block}
+.bottom-sheet{position:fixed;bottom:0;left:0;right:0;background:#120f0a;border-top:1px solid #2e2820;border-radius:16px 16px 0 0;z-index:51;max-height:80vh;overflow-y:auto;transform:translateY(100%);transition:transform .3s ease;padding:1rem 1.2rem 2rem}
+.bottom-sheet.open{transform:translateY(0)}
+.sheet-handle{width:36px;height:4px;background:#2e2820;border-radius:2px;margin:0 auto 1.2rem}
+.sheet-section{margin-bottom:1.2rem}
+.sheet-label{color:#5a4f40;font-size:0.68rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:0.6rem}
+.genre-wrap{display:flex;flex-wrap:wrap;gap:0.4rem}
+.gbtn{background:#1e1a14;border:1px solid #2e2820;color:#8a7a65;padding:0.35rem 0.7rem;border-radius:20px;font-size:0.75rem;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.gbtn.active{background:var(--accent);border-color:var(--accent-s);color:#c8e8e0}
+#char-list{display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.5rem}
+.ccard{background:#1e1a14;border:1px solid #2e2820;border-radius:8px;padding:0.6rem 0.8rem;position:relative}
+.cname{font-family:'Playfair Display',serif;color:var(--parchment);font-size:0.9rem}
+.crole{color:var(--sepia);font-size:0.65rem;text-transform:uppercase;letter-spacing:.08em}
+.cdesc{color:#7a6d5a;font-size:0.72rem;margin-top:0.2rem;line-height:1.4}
+.crm{position:absolute;top:0.5rem;right:0.6rem;background:none;border:none;color:#3a3028;cursor:pointer;font-size:0.85rem;padding:2px}
+.crm:hover{color:var(--danger)}
+.add-btn{background:none;border:1px dashed #2e2820;color:#5a4f40;padding:0.5rem;border-radius:8px;font-size:0.75rem;width:100%;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+.add-btn:hover{border-color:var(--sepia);color:var(--sepia)}
+.cform{background:#1e1a14;border:1px solid #2e2820;border-radius:8px;padding:0.8rem;display:flex;flex-direction:column;gap:0.4rem}
+.cform input,.cform select,.cform textarea{background:#120f0a;border:1px solid #2e2820;color:var(--parchment);padding:0.45rem 0.6rem;border-radius:5px;font-size:0.78rem;font-family:'Inter',sans-serif;outline:none;width:100%}
+.cform input:focus,.cform textarea:focus{border-color:var(--sepia)}
+.cform select option{background:#1e1a14}
+.cform textarea{resize:none;height:50px}
+.form-row{display:flex;gap:0.4rem}
+.btn-ok{flex:1;background:var(--accent);color:#c8e8e0;border:none;border-radius:5px;padding:0.45rem;font-size:0.75rem;cursor:pointer;font-family:'Inter',sans-serif}
+.btn-cl{flex:1;background:#2e2820;color:#8a7a65;border:none;border-radius:5px;padding:0.45rem;font-size:0.75rem;cursor:pointer;font-family:'Inter',sans-serif}
+
+/* Title row */
+.title-row{display:flex;align-items:center;gap:0.5rem;padding:0.5rem 1rem;background:#120f0a;border-bottom:1px solid #1e1a14;flex-shrink:0}
+.title-row input{flex:1;background:transparent;border:none;color:#8a7a65;font-size:0.8rem;font-family:'Inter',sans-serif;outline:none}
+.title-row input::placeholder{color:#3a3028}
+.save-status{font-size:0.6rem;color:#3a3028;transition:color .3s}
+.save-status.saved{color:var(--accent-s)}
+
+/* PAGES */
+.pages{flex:1;overflow-y:auto;padding:1.5rem 1.2rem;background:var(--paper);background-image:repeating-linear-gradient(transparent,transparent 31px,#e8e0d0 31px,#e8e0d0 32px);background-position:0 38px;line-height:2rem;-webkit-overflow-scrolling:touch}
+.welcome{text-align:center;padding:2.5rem 1rem;max-width:320px;margin:auto}
+.welcome .q{font-size:2.5rem;margin-bottom:0.8rem}
+.welcome h1{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--ink);margin-bottom:0.5rem}
+.welcome p{color:var(--muted);font-size:0.85rem;line-height:1.6;margin-bottom:1.2rem}
+.start-btn{background:var(--ink);color:var(--sepia-l);border:none;border-radius:8px;padding:0.8rem 1.8rem;font-size:0.9rem;cursor:pointer;font-family:'Playfair Display',serif;letter-spacing:.03em}
+.story-title{font-family:'Playfair Display',serif;font-size:1.4rem;text-align:center;color:var(--ink);margin-bottom:0.2rem}
+.story-sub{font-size:0.65rem;text-align:center;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:1rem}
+.sep{text-align:center;color:var(--sepia);margin:0.5rem 0 1rem;letter-spacing:.2em}
+.ai-p{font-family:'Playfair Display',serif;font-size:0.95rem;color:var(--ink);line-height:2rem;text-align:justify;margin-bottom:0.5rem;white-space:pre-wrap}
+.user-p{font-family:'Playfair Display',serif;font-style:italic;color:var(--accent-s);font-size:0.95rem;line-height:2rem;margin-bottom:0.5rem}
+.user-p::before{content:"— "}
+.typing-wrap{display:none;align-items:center;gap:0.4rem;padding:0.3rem 0}
+.typing-wrap.on{display:flex}
+.typing-wrap span{font-family:'Playfair Display',serif;font-style:italic;color:var(--muted);font-size:0.8rem}
+.dot{width:4px;height:4px;background:var(--sepia);border-radius:50%;animation:bop 1.2s infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes bop{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-5px)}}
+
+/* INPUT */
+.input-zone{background:var(--aged);border-top:2px solid #c4ad88;padding:0.7rem 0.9rem;flex-shrink:0;padding-bottom:max(0.7rem, env(safe-area-inset-bottom))}
+.quick{display:flex;gap:0.3rem;overflow-x:auto;padding-bottom:0.4rem;scrollbar-width:none}
+.quick::-webkit-scrollbar{display:none}
+.qbtn{background:none;border:1px solid #c4ad88;color:var(--muted);padding:0.22rem 0.65rem;border-radius:20px;font-size:0.68rem;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif;flex-shrink:0;transition:all .15s}
+.qbtn:active{border-color:var(--sepia);color:var(--sepia)}
+.irow{display:flex;gap:0.5rem;align-items:flex-end;margin-top:0.4rem}
+#uinput{flex:1;background:var(--parchment);border:1px solid #c4ad88;border-radius:8px;padding:0.55rem 0.8rem;font-family:'Playfair Display',serif;font-size:16px;color:var(--ink);resize:none;outline:none;min-height:46px;max-height:90px;line-height:1.5;-webkit-appearance:none}
+#uinput::placeholder{color:#b0a08a;font-style:italic}
+#uinput:focus{border-color:var(--sepia)}
+.send-btn{background:var(--ink);color:var(--sepia-l);border:none;border-radius:8px;padding:0 1rem;cursor:pointer;font-size:1rem;height:46px;flex-shrink:0;transition:all .2s}
+.send-btn:disabled{opacity:.35;cursor:not-allowed}
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setup-screen">
+  <div class="setup-card">
+    <div class="setup-logo">🪶</div>
+    <div class="setup-title">Encre Vivante</div>
+    <div class="setup-sub">Roman Interactif · Gemini</div>
+    <label class="setup-label">Clé API Google Gemini (gratuite)</label>
+    <p class="setup-hint">
+      <b>Comment l'obtenir (2 min) :</b><br>
+      1. Va sur <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a><br>
+      2. Connecte-toi avec ton compte Google<br>
+      3. Appuie sur <b>« Créer une clé API »</b><br>
+      4. Copie la clé et colle-la ici
+    </p>
+    <p class="setup-error" id="setup-error">Clé invalide, vérifie-la et réessaie.</p>
+    <input type="password" id="api-key-input" placeholder="AIza…">
+    <button class="setup-btn" id="save-key-btn">Commencer à écrire →</button>
+    <p class="setup-privacy">🔒 Ta clé et ton histoire restent sur ton téléphone.<br>Rien n'est envoyé ailleurs que chez Google.</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="logo-wrap">
+      <span class="logo-quill">🪶</span>
+      <span class="logo-text">Encre Vivante</span>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="export-btn" title="Exporter l'histoire">💾</button>
+      <button class="icon-btn" id="settings-btn" title="Personnages & Genre">⚙️</button>
+      <button class="icon-btn" id="new-btn" title="Nouvelle histoire">📖</button>
+    </div>
+  </header>
+
+  <div class="title-row">
+    <span style="color:#3a3028;font-size:0.85rem">✦</span>
+    <input type="text" id="stitle" placeholder="Titre du roman…" maxlength="60">
+    <span class="save-status" id="save-status">●</span>
+  </div>
+
+  <div class="pages" id="pages">
+    <div class="welcome" id="welcome">
+      <div class="q">🪶</div>
+      <h1>Votre histoire commence ici</h1>
+      <p>Appuyez sur ⚙️ pour choisir le genre et ajouter vos personnages, puis lancez l'histoire.</p>
+      <button class="start-btn" id="startbtn">Commencer l'histoire</button>
+    </div>
+    <div id="scontent" style="display:none">
+      <div class="story-title" id="sdisplay">Sans titre</div>
+      <div class="story-sub" id="gdisplay">Fantaisie · Roman interactif</div>
+      <div class="sep">✦ ✦ ✦</div>
+      <div id="sblocks"></div>
+      <div class="typing-wrap" id="typing">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <span>L'auteur écrit…</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-zone">
+    <div class="quick" id="quick">
+      <button class="qbtn" data-a="Décrivez ce que je vois autour de moi.">🌍 Lieu</button>
+      <button class="qbtn" data-a="Une rencontre inattendue survient.">🤝 Rencontre</button>
+      <button class="qbtn" data-a="Un danger soudain apparaît !">⚠️ Danger</button>
+      <button class="qbtn" data-a="Je fouille les lieux à la recherche d'indices.">🔍 Fouiller</button>
+      <button class="qbtn" data-a="Je parle à l'un des personnages.">💬 Dialogue</button>
+      <button class="qbtn" data-a="Une révélation surprenante se produit.">✨ Révélation</button>
+      <button class="qbtn" data-a="Faites passer du temps, décrivez ce qui change.">⏳ Ellipse</button>
+    </div>
+    <div class="irow">
+      <textarea id="uinput" rows="1" placeholder="Votre action…"></textarea>
+      <button class="send-btn" id="sendbtn">✍️</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET -->
+<div class="sheet-overlay" id="overlay"></div>
+<div class="bottom-sheet" id="bsheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-section">
+    <div class="sheet-label">Genre</div>
+    <div class="genre-wrap" id="gg">
+      <button class="gbtn active" data-g="Fantaisie">⚔️ Fantaisie</button>
+      <button class="gbtn" data-g="Thriller">🔪 Thriller</button>
+      <button class="gbtn" data-g="Romance">💌 Romance</button>
+      <button class="gbtn" data-g="Sci-Fi">🚀 Sci-Fi</button>
+      <button class="gbtn" data-g="Horreur">👻 Horreur</button>
+      <button class="gbtn" data-g="Historique">🏰 Historique</button>
+    </div>
+  </div>
+  <div class="sheet-section">
+    <div class="sheet-label">Personnages</div>
+    <div id="char-list"></div>
+    <div id="cform-area">
+      <button class="add-btn" id="addbtn">+ Ajouter un personnage</button>
+    </div>
+  </div>
+  <div class="sheet-section">
+    <div class="sheet-label">Clé API</div>
+    <button class="add-btn" id="change-key-btn">🔑 Changer la clé API</button>
+  </div>
+</div>
+
+<script>
+// ══════════ SAUVEGARDE PERSISTANTE ══════════
+// L'histoire complète est sauvegardée sur le téléphone à CHAQUE modification.
+// localStorage persiste indéfiniment (3 mois, 1 an...) tant que l'app
+// installée sur l'écran d'accueil n'est pas supprimée.
+
+const KEYS = { api: 'ev_gemini_key', story: 'ev_story_v1' };
+let apiKey = localStorage.getItem(KEYS.api) || '';
+
+let state = {
+  genre: 'Fantaisie',
+  chars: [],
+  title: '',
+  history: [],   // [{role:'user'|'model', text}]
+  started: false
+};
+
+function saveState() {
+  try {
+    localStorage.setItem(KEYS.story, JSON.stringify(state));
+    flashSaved();
+  } catch (e) { console.error('Save failed', e); }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(KEYS.story);
+    if (raw) {
+      const s = JSON.parse(raw);
+      if (s && typeof s === 'object') state = Object.assign(state, s);
+    }
+  } catch (e) { console.error('Load failed', e); }
+}
+
+function flashSaved() {
+  const el = document.getElementById('save-status');
+  el.classList.add('saved');
+  setTimeout(() => el.classList.remove('saved'), 1200);
+}
+
+// ══════════ SETUP ══════════
+function showSetup() {
+  document.getElementById('setup-screen').classList.remove('hidden');
+  document.getElementById('app').classList.remove('visible');
+}
+function showApp() {
+  document.getElementById('setup-screen').classList.add('hidden');
+  document.getElementById('app').classList.add('visible');
+}
+
+document.getElementById('save-key-btn').addEventListener('click', async () => {
+  const k = document.getElementById('api-key-input').value.trim();
+  const err = document.getElementById('setup-error');
+  err.classList.remove('on');
+  if (k.length < 20) { err.classList.add('on'); return; }
+  apiKey = k;
+  localStorage.setItem(KEYS.api, k);
+  showApp();
+});
+
+document.getElementById('change-key-btn').addEventListener('click', () => {
+  closeSheet();
+  document.getElementById('api-key-input').value = apiKey;
+  showSetup();
+});
+
+// ══════════ GEMINI API ══════════
+function buildSys() {
+  const cl = state.chars.length
+    ? state.chars.map(c => `- ${c.name} (${c.role})${c.desc ? ': ' + c.desc : ''}`).join('\n')
+    : '- Aucun personnage défini (invente-les avec créativité)';
+  return `Tu es un auteur de romans interactifs en français, expert du genre "${state.genre}".
+Tu co-écris une histoire avec le lecteur en temps réel.
+
+PERSONNAGES :
+${cl}
+
+RÈGLES :
+- Écris en français, style littéraire soigné, prose riche et immersive.
+- 2 à 4 paragraphes par réponse (150-250 mots).
+- Intègre les personnages de manière organique.
+- Fais avancer l'intrigue, crée du suspense et de l'émotion.
+- Termine sur un moment ouvert qui invite le lecteur à agir.
+- Pas de titre de chapitre, juste la prose narrative.
+- Reste dans le roman, sans aucun commentaire méta.
+- IMPORTANT : garde une parfaite cohérence avec tout ce qui a été écrit avant (lieux, objets, événements, personnalités des personnages).`;
+}
+
+async function callGemini(userMsg) {
+  state.history.push({ role: 'user', text: userMsg });
+  saveState();
+
+  const contents = state.history.map(m => ({
+    role: m.role,
+    parts: [{ text: m.text }]
+  }));
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      system_instruction: { parts: [{ text: buildSys() }] },
+      contents: contents,
+      generationConfig: { maxOutputTokens: 1000, temperature: 0.9 }
+    })
+  });
+
+  if (!r.ok) {
+    state.history.pop(); // remove failed user msg
+    saveState();
+    if (r.status === 400 || r.status === 403) throw new Error('CLE_INVALIDE');
+    if (r.status === 429) throw new Error('QUOTA');
+    throw new Error('API');
+  }
+
+  const d = await r.json();
+  const t = d.candidates?.[0]?.content?.parts?.[0]?.text || 'Une erreur mystérieuse interrompt le récit…';
+  state.history.push({ role: 'model', text: t });
+  saveState();
+  return t;
+}
+
+// ══════════ UI ══════════
+document.getElementById('gg').addEventListener('click', e => {
+  const b = e.target.closest('.gbtn');
+  if (!b) return;
+  document.querySelectorAll('.gbtn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  state.genre = b.dataset.g;
+  saveState();
+});
+
+function openSheet() {
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('bsheet').classList.add('open');
+}
+function closeSheet() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('bsheet').classList.remove('open');
+}
+document.getElementById('settings-btn').addEventListener('click', openSheet);
+document.getElementById('overlay').addEventListener('click', closeSheet);
+
+function renderChars() {
+  const l = document.getElementById('char-list');
+  l.innerHTML = '';
+  state.chars.forEach((c, i) => {
+    const d = document.createElement('div');
+    d.className = 'ccard';
+    d.innerHTML = `<div class="cname">${esc(c.name)}</div><div class="crole">${esc(c.role)}</div>${c.desc ? `<div class="cdesc">${esc(c.desc)}</div>` : ''}<button class="crm" data-i="${i}">✕</button>`;
+    l.appendChild(d);
+  });
+}
+document.getElementById('char-list').addEventListener('click', e => {
+  const b = e.target.closest('.crm');
+  if (!b) return;
+  state.chars.splice(+b.dataset.i, 1);
+  renderChars();
+  saveState();
+});
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+let addOpen = false;
+function initAdd() {
+  const btn = document.getElementById('addbtn');
+  if (btn) btn.addEventListener('click', openAdd);
+}
+function openAdd() {
+  if (addOpen) return; addOpen = true;
+  document.getElementById('cform-area').innerHTML = `
+    <div class="cform">
+      <input id="cn" placeholder="Nom du personnage" maxlength="40">
+      <select id="cr">
+        <option>Protagoniste</option><option>Antagoniste</option>
+        <option>Allié</option><option>Mystérieux</option>
+        <option>Mentor</option><option>Secondaire</option>
+      </select>
+      <textarea id="cd" placeholder="Description courte… (optionnel)"></textarea>
+      <div class="form-row">
+        <button class="btn-ok" id="cok">Ajouter</button>
+        <button class="btn-cl" id="ccl">Annuler</button>
+      </div>
+    </div>`;
+  document.getElementById('cok').onclick = () => {
+    const n = document.getElementById('cn').value.trim();
+    if (!n) return;
+    state.chars.push({ name: n, role: document.getElementById('cr').value, desc: document.getElementById('cd').value.trim() });
+    renderChars();
+    saveState();
+    closeAdd();
+  };
+  document.getElementById('ccl').onclick = closeAdd;
+}
+function closeAdd() {
+  addOpen = false;
+  document.getElementById('cform-area').innerHTML = '<button class="add-btn" id="addbtn">+ Ajouter un personnage</button>';
+  initAdd();
+}
+initAdd();
+
+// Title autosave
+document.getElementById('stitle').addEventListener('input', function () {
+  state.title = this.value;
+  if (state.started) document.getElementById('sdisplay').textContent = this.value || 'Sans titre';
+  saveState();
+});
+
+// New story
+document.getElementById('new-btn').addEventListener('click', () => {
+  if (!confirm('Commencer une nouvelle histoire ?\n\n⚠️ L\'histoire actuelle sera définitivement effacée.\n(Pense à l\'exporter avec 💾 avant si tu veux la garder)')) return;
+  state.history = [];
+  state.started = false;
+  state.title = '';
+  saveState();
+  document.getElementById('welcome').style.display = '';
+  document.getElementById('scontent').style.display = 'none';
+  document.getElementById('sblocks').innerHTML = '';
+  document.getElementById('stitle').value = '';
+  document.getElementById('uinput').value = '';
+});
+
+// Export story as text file
+document.getElementById('export-btn').addEventListener('click', () => {
+  if (!state.history.length) { alert('Aucune histoire à exporter pour le moment.'); return; }
+  let txt = (state.title || 'Sans titre') + '\n' + state.genre + ' · Roman interactif\n\n✦ ✦ ✦\n\n';
+  state.history.forEach(m => {
+    if (m.role === 'user' && !m.text.startsWith("Commence l'histoire.")) txt += '— ' + m.text + '\n\n';
+    if (m.role === 'model') txt += m.text + '\n\n';
+  });
+  const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (state.title || 'mon-roman') + '.txt';
+  a.click();
+});
+
+// ══════════ STORY ══════════
+let loading = false;
+
+function addBlock(txt, type) {
+  const b = document.getElementById('sblocks');
+  const p = document.createElement('p');
+  p.className = type === 'ai' ? 'ai-p' : 'user-p';
+  p.textContent = txt;
+  b.appendChild(p);
+  scrollDown();
+}
+function scrollDown() { const pg = document.getElementById('pages'); pg.scrollTop = pg.scrollHeight; }
+function setLoad(v) {
+  loading = v;
+  document.getElementById('typing').classList.toggle('on', v);
+  document.getElementById('sendbtn').disabled = v;
+  if (v) scrollDown();
+}
+
+function showStoryUI() {
+  document.getElementById('welcome').style.display = 'none';
+  document.getElementById('scontent').style.display = 'block';
+  document.getElementById('sdisplay').textContent = state.title || 'Sans titre';
+  document.getElementById('gdisplay').textContent = state.genre + ' · Roman interactif';
+}
+
+function handleErr(e) {
+  if (e.message === 'CLE_INVALIDE') {
+    alert('Ta clé API semble invalide. Vérifie-la.');
+    showSetup();
+  } else if (e.message === 'QUOTA') {
+    addBlock("⏳ Limite gratuite atteinte pour le moment. Attends une minute et réessaie.", 'ai');
+  } else {
+    addBlock("Une erreur est survenue. Vérifie ta connexion et réessaie.", 'ai');
+  }
+}
+
+async function startStory() {
+  showStoryUI();
+  state.started = true;
+  saveState();
+  setLoad(true);
+  try {
+    const r = await callGemini("Commence l'histoire. Écris l'incipit du roman, installe l'atmosphère et introduis les personnages.");
+    addBlock(r, 'ai');
+  } catch (e) { handleErr(e); }
+  setLoad(false);
+}
+
+async function send() {
+  if (loading) return;
+  const inp = document.getElementById('uinput');
+  const txt = inp.value.trim();
+  if (!state.started) { await startStory(); return; }
+  if (!txt) return;
+  inp.value = '';
+  inp.style.height = 'auto';
+  addBlock(txt, 'user');
+  setLoad(true);
+  try {
+    const r = await callGemini(txt);
+    addBlock(r, 'ai');
+  } catch (e) { handleErr(e); }
+  setLoad(false);
+}
+
+document.getElementById('startbtn').addEventListener('click', startStory);
+document.getElementById('sendbtn').addEventListener('click', send);
+document.getElementById('uinput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+});
+document.getElementById('uinput').addEventListener('input', function () {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 90) + 'px';
+});
+document.getElementById('quick').addEventListener('click', e => {
+  const b = e.target.closest('.qbtn');
+  if (!b) return;
+  document.getElementById('uinput').value = b.dataset.a;
+  if (state.started) send();
+});
+
+// ══════════ RESTAURATION AU LANCEMENT ══════════
+loadState();
+
+// Restore UI from saved state
+document.getElementById('stitle').value = state.title || '';
+document.querySelectorAll('.gbtn').forEach(b => {
+  b.classList.toggle('active', b.dataset.g === state.genre);
+});
+renderChars();
+
+if (state.started && state.history.length) {
+  showStoryUI();
+  state.history.forEach(m => {
+    if (m.role === 'user' && !m.text.startsWith("Commence l'histoire.")) addBlock(m.text, 'user');
+    if (m.role === 'model') addBlock(m.text, 'ai');
+  });
+  setTimeout(scrollDown, 100);
+}
+
+if (apiKey) showApp(); else showSetup();
+</script>
+</body>
+</html>
