@@ -13,50 +13,22 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-
 :root{
-  --bg:#faf8f3;
-  --bg-soft:#f2eee5;
-  --ink:#20201d;
-  --ink-soft:#57544c;
-  --ink-faint:#95917f;
-  --line:#e7e2d6;
-  --accent:#c2612f;          /* orange terracotta */
-  --you:#2f6d5f;             /* vert : vos ajouts */
-  --you-bg:#eaf2ef;
-  --consigne:#7b5ea7;        /* violet : consignes */
-  --consigne-bg:#f0ebf6;
-  --char:#b0472f;            /* rouge-brique : noms de personnages */
-  --desc:#7a6420;            /* ocre : descriptions/lieux */
-  --card:#ffffff;
-  --radius:14px;
+  --bg:#faf8f3;--bg-soft:#f2eee5;--ink:#20201d;--ink-soft:#57544c;--ink-faint:#95917f;
+  --line:#e7e2d6;--accent:#c2612f;
+  --you:#2f6d5f;--you-bg:#eaf2ef;--consigne:#7b5ea7;--consigne-bg:#f0ebf6;
+  --char:#b0472f;--desc:#7a6420;--card:#ffffff;--radius:14px;
 }
 [data-theme="dark"]{
-  --bg:#171613;
-  --bg-soft:#201e1a;
-  --ink:#eae6dc;
-  --ink-soft:#b0aa9a;
-  --ink-faint:#6f6a5c;
-  --line:#2e2b25;
-  --accent:#e0864f;
-  --you:#5fb8a3;
-  --you-bg:#1c2b28;
-  --consigne:#b79ce0;
-  --consigne-bg:#26213099;
-  --char:#e28060;
-  --desc:#cdae55;
-  --card:#211f1b;
+  --bg:#171613;--bg-soft:#201e1a;--ink:#eae6dc;--ink-soft:#b0aa9a;--ink-faint:#6f6a5c;
+  --line:#2e2b25;--accent:#e0864f;
+  --you:#5fb8a3;--you-bg:#1c2b28;--consigne:#b79ce0;--consigne-bg:#262130;
+  --char:#e28060;--desc:#cdae55;--card:#211f1b;
 }
-
 html,body{height:100%;overflow:hidden}
-body{
-  font-family:'Inter',sans-serif;
-  background:var(--bg);color:var(--ink);
-  display:flex;flex-direction:column;
-  transition:background .3s,color .3s;
-}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;transition:background .3s,color .3s}
 
-/* ── SETUP ── */
+/* SETUP */
 #setup{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:1.5rem;z-index:100;overflow-y:auto}
 #setup.hidden{display:none}
 .setup-card{width:100%;max-width:360px;text-align:center}
@@ -67,142 +39,132 @@ body{
 .setup-hint{text-align:left;color:var(--ink-faint);font-size:0.72rem;line-height:1.7;margin-bottom:1.2rem}
 .setup-hint a{color:var(--accent);text-decoration:none;font-weight:500}
 .setup-hint b{color:var(--ink-soft)}
-#api-key{width:100%;background:var(--card);border:1px solid var(--line);color:var(--ink);padding:0.85rem 1rem;border-radius:12px;font-size:0.9rem;font-family:'Inter',sans-serif;outline:none;margin-bottom:1rem;transition:border-color .2s}
+#api-key{width:100%;background:var(--card);border:1px solid var(--line);color:var(--ink);padding:0.85rem 1rem;border-radius:12px;font-size:0.9rem;font-family:'Inter',sans-serif;outline:none;margin-bottom:1rem}
 #api-key:focus{border-color:var(--accent)}
 #api-key::placeholder{color:var(--ink-faint)}
-.setup-btn{width:100%;background:var(--ink);color:var(--bg);border:none;border-radius:12px;padding:0.9rem;font-size:0.9rem;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:opacity .2s}
+.setup-btn{width:100%;background:var(--ink);color:var(--bg);border:none;border-radius:12px;padding:0.9rem;font-size:0.9rem;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif}
 .setup-btn:active{opacity:.85}
 .setup-privacy{color:var(--ink-faint);font-size:0.68rem;line-height:1.6;margin-top:1.2rem}
 .setup-err{color:#c0453a;font-size:0.75rem;margin-bottom:0.8rem;display:none;text-align:left}
 .setup-err.on{display:block}
 
-/* ── APP ── */
+/* ── HOME / LIBRARY ── */
+#home{display:none;flex-direction:column;height:100%}
+#home.on{display:flex}
+.home-head{padding:max(1.4rem,env(safe-area-inset-top)) 1.3rem 0.5rem;display:flex;align-items:center;justify-content:space-between}
+.home-brand{display:flex;align-items:center;gap:0.5rem}
+.home-brand .q{font-size:1.4rem}
+.home-brand .t{font-family:'Fraunces',serif;font-weight:600;font-size:1.35rem}
+.home-scroll{flex:1;overflow-y:auto;padding:1rem 1.3rem calc(1.5rem + env(safe-area-inset-bottom))}
+.home-inner{max-width:640px;margin:0 auto}
+.new-story-btn{width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:1rem;font-size:0.95rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-bottom:1.6rem}
+.new-story-btn:active{opacity:.9}
+.lib-label{font-size:0.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;margin-bottom:0.8rem}
+.lib-empty{color:var(--ink-faint);font-size:0.85rem;text-align:center;padding:2rem 1rem;line-height:1.6}
+.story-cards{display:flex;flex-direction:column;gap:0.7rem}
+.scard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:1rem;cursor:pointer;position:relative;transition:transform .1s,border-color .2s}
+.scard:active{transform:scale(.99);border-color:var(--accent)}
+.scard-title{font-family:'Fraunces',serif;font-weight:600;font-size:1.1rem;margin-bottom:0.25rem;padding-right:2rem}
+.scard-meta{font-size:0.7rem;color:var(--ink-faint);letter-spacing:.06em;text-transform:uppercase;margin-bottom:0.5rem}
+.scard-excerpt{font-size:0.82rem;color:var(--ink-soft);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.scard-x{position:absolute;top:0.7rem;right:0.8rem;background:none;border:none;color:var(--ink-faint);font-size:1rem;cursor:pointer;padding:4px;border-radius:6px}
+.scard-x:active{color:#c0453a;background:var(--bg-soft)}
+.scard-continue{margin-top:0.6rem;font-size:0.75rem;color:var(--accent);font-weight:600}
+
+/* APP */
 #app{display:none;flex-direction:column;height:100%}
 #app.on{display:flex}
-
-header{
-  display:flex;align-items:center;gap:0.5rem;
-  padding:max(0.7rem,env(safe-area-inset-top)) 1.1rem 0.7rem;
-  flex-shrink:0;
-}
-.h-btn{background:none;border:none;color:var(--ink-soft);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:background .2s}
+header{display:flex;align-items:center;gap:0.4rem;padding:max(0.7rem,env(safe-area-inset-top)) 1.1rem 0.7rem;flex-shrink:0}
+.h-btn{background:none;border:none;color:var(--ink-soft);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center}
 .h-btn:active{background:var(--bg-soft)}
 .h-center{flex:1;text-align:center;overflow:hidden}
 .h-title{font-size:0.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .progress{height:2px;background:var(--line);margin:0 1.1rem;border-radius:2px;overflow:hidden;flex-shrink:0}
-.progress-bar{height:100%;width:38%;background:var(--accent);border-radius:2px;transition:width .4s}
-
-/* PAGES */
+.progress-bar{height:100%;width:0%;background:var(--accent);border-radius:2px;transition:width .4s}
 .pages{flex:1;overflow-y:auto;padding:1.4rem 1.3rem 1rem;-webkit-overflow-scrolling:touch}
 .pages::-webkit-scrollbar{width:0}
 .page-inner{max-width:620px;margin:0 auto;width:100%}
-
-.welcome{text-align:center;padding:3rem 1rem;max-width:300px;margin:auto}
+.welcome{text-align:center;padding:3rem 1rem;max-width:320px;margin:auto}
 .welcome .q{font-size:2.2rem;margin-bottom:0.8rem}
 .welcome h1{font-family:'Fraunces',serif;font-weight:600;font-size:1.4rem;margin-bottom:0.6rem}
 .welcome p{color:var(--ink-soft);font-size:0.85rem;line-height:1.6;margin-bottom:0.5rem}
 .welcome .tip{font-size:0.75rem;color:var(--accent)}
-
-.story-title{font-family:'Fraunces',serif;font-weight:600;font-size:1.6rem;text-align:center;margin-bottom:0.3rem;letter-spacing:-0.01em}
+.story-title{font-family:'Fraunces',serif;font-weight:600;font-size:1.6rem;text-align:center;margin-bottom:0.3rem}
 .story-sub{font-size:0.64rem;text-align:center;color:var(--ink-faint);letter-spacing:.16em;text-transform:uppercase;margin-bottom:1.6rem}
-
-/* Text blocks */
 .blk{margin-bottom:1.5rem;animation:fade .4s ease}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-
-.blk-roman{
-  font-family:'Fraunces',serif;font-weight:400;
-  font-size:1.14rem;line-height:1.72;color:var(--ink);
-  letter-spacing:-0.003em;
-}
+.blk-roman{font-family:'Fraunces',serif;font-weight:400;font-size:1.14rem;line-height:1.72;color:var(--ink);letter-spacing:-0.003em}
 .blk-roman p{margin-bottom:0.9rem}
 .blk-roman p:last-child{margin-bottom:0}
-/* Dialogue lines — dash + hanging indent, own line */
-.blk-roman p.dialogue{
-  padding-left:1.4em;text-indent:-1.4em;
-  margin-bottom:0.55rem;
-}
+.blk-roman p.dialogue{padding-left:1.4em;text-indent:-1.4em;margin-bottom:0.5rem}
 .blk-roman p.dialogue .dash{color:var(--accent);font-weight:500}
-
-/* Character names — bold + color */
 .nom{color:var(--char);font-weight:600}
-/* Descriptions/places — italic ocre */
 .descr{color:var(--desc);font-style:italic}
-/* Dialogue — subtle emphasis */
-.dlg{color:var(--ink)}
-
-.blk-you{
-  background:var(--you-bg);
-  border-radius:var(--radius);
-  padding:0.9rem 1.05rem;
-  position:relative;
-}
+.blk-you{background:var(--you-bg);border-radius:var(--radius);padding:0.9rem 1.05rem}
 .blk-you .tag{color:var(--you)}
 .blk-you .txt{font-family:'Fraunces',serif;font-size:1.08rem;line-height:1.65;color:var(--ink);white-space:pre-wrap}
-
-.blk-consigne{
-  background:var(--consigne-bg);
-  border-radius:var(--radius);
-  padding:0.75rem 1.05rem;
-}
+.blk-consigne{background:var(--consigne-bg);border-radius:var(--radius);padding:0.75rem 1.05rem}
 .blk-consigne .tag{color:var(--consigne)}
 .blk-consigne .txt{font-family:'Inter',sans-serif;font-size:0.86rem;line-height:1.55;color:var(--ink-soft)}
-
 .tag{display:block;font-family:'Inter',sans-serif;font-size:0.6rem;letter-spacing:.13em;text-transform:uppercase;font-weight:600;margin-bottom:0.4rem}
-
+.retry-btn{margin-top:0.5rem;background:var(--bg-soft);border:1px solid var(--line);color:var(--accent);font-size:0.75rem;font-weight:600;padding:0.4rem 0.8rem;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif}
 .typing{display:none;gap:0.35rem;padding:0.5rem 0.2rem;align-items:center}
 .typing.on{display:flex}
 .typing .d{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:bop 1.2s infinite}
 .typing .d:nth-child(2){animation-delay:.2s}.typing .d:nth-child(3){animation-delay:.4s}
 @keyframes bop{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-5px);opacity:1}}
-
-/* INPUT */
 .input-zone{padding:0.6rem 0.9rem max(0.6rem,env(safe-area-inset-bottom));flex-shrink:0;background:var(--bg)}
 .input-inner{max-width:620px;margin:0 auto;width:100%}
 .mode-tabs{display:flex;gap:0.4rem;margin-bottom:0.55rem}
-.mtab{flex:1;background:var(--bg-soft);border:1px solid transparent;color:var(--ink-soft);padding:0.5rem;border-radius:10px;font-size:0.75rem;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:0.3rem}
+.mtab{flex:1;background:var(--bg-soft);border:1px solid transparent;color:var(--ink-soft);padding:0.5rem;border-radius:10px;font-size:0.75rem;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
 .mtab.active[data-m="ecrire"]{background:var(--you-bg);color:var(--you);border-color:var(--you)}
 .mtab.active[data-m="consigne"]{background:var(--consigne-bg);color:var(--consigne);border-color:var(--consigne)}
-.input-box{display:flex;align-items:flex-end;gap:0.5rem;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:0.5rem 0.5rem 0.5rem 0.9rem;transition:border-color .2s}
+.input-box{display:flex;align-items:flex-end;gap:0.5rem;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:0.5rem 0.5rem 0.5rem 0.9rem}
 .input-box:focus-within{border-color:var(--accent)}
 #uinput{flex:1;background:none;border:none;outline:none;color:var(--ink);font-family:'Fraunces',serif;font-size:16px;line-height:1.5;resize:none;min-height:28px;max-height:150px;padding:0.25rem 0}
-#uinput::placeholder{color:var(--ink-faint);font-family:'Inter',sans-serif;font-size:0.85rem;font-style:normal}
-.send{background:var(--ink);color:var(--bg);border:none;width:40px;height:40px;border-radius:12px;cursor:pointer;font-size:1rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:opacity .2s}
+#uinput::placeholder{color:var(--ink-faint);font-family:'Inter',sans-serif;font-size:0.85rem}
+.send{background:var(--ink);color:var(--bg);border:none;width:40px;height:40px;border-radius:12px;cursor:pointer;font-size:1rem;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .send:disabled{opacity:.3}
 .hint{font-size:0.65rem;color:var(--ink-faint);text-align:center;margin-top:0.45rem}
 
 /* SHEET */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50;display:none}
 .overlay.on{display:block}
-.sheet{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-radius:20px 20px 0 0;z-index:51;max-height:85vh;overflow-y:auto;transform:translateY(100%);transition:transform .32s cubic-bezier(.4,0,.2,1);padding:0.8rem 1.2rem calc(1.5rem + env(safe-area-inset-bottom))}
+.sheet{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-radius:20px 20px 0 0;z-index:51;max-height:88vh;overflow-y:auto;transform:translateY(100%);transition:transform .32s cubic-bezier(.4,0,.2,1);padding:0.8rem 1.2rem calc(1.5rem + env(safe-area-inset-bottom))}
 .sheet.on{transform:translateY(0)}
 .handle{width:36px;height:4px;background:var(--line);border-radius:2px;margin:0.3rem auto 1.3rem}
 .sec{margin-bottom:1.5rem}
 .sec-label{font-size:0.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;margin-bottom:0.7rem}
+.sec-label .sub{text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink-faint);font-size:0.7rem;display:block;margin-top:0.2rem}
 .pills{display:flex;flex-wrap:wrap;gap:0.4rem}
 .pill{background:var(--bg-soft);border:1px solid transparent;color:var(--ink-soft);padding:0.4rem 0.8rem;border-radius:20px;font-size:0.78rem;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
 .pill.active{background:var(--ink);color:var(--bg)}
-#chars{display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.5rem}
-.cc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:0.7rem 0.9rem;position:relative}
-.cc-name{font-family:'Fraunces',serif;font-weight:600;font-size:0.95rem;color:var(--char)}
-.cc-role{font-size:0.64rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint);margin-top:0.1rem}
-.cc-desc{font-size:0.76rem;color:var(--ink-soft);margin-top:0.35rem;line-height:1.45}
-.cc-x{position:absolute;top:0.55rem;right:0.7rem;background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:0.9rem;padding:3px}
-.cc-x:active{color:#c0453a}
-.add{background:none;border:1.5px dashed var(--line);color:var(--ink-faint);padding:0.65rem;border-radius:12px;font-size:0.8rem;width:100%;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500;transition:all .2s}
+.entity-list{display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.5rem}
+.ent{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:0.7rem 0.9rem;position:relative}
+.ent-name{font-family:'Fraunces',serif;font-weight:600;font-size:0.95rem}
+.ent.char .ent-name{color:var(--char)}
+.ent.place .ent-name{color:var(--desc)}
+.ent-role{font-size:0.64rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint);margin-top:0.1rem}
+.ent-desc{font-size:0.76rem;color:var(--ink-soft);margin-top:0.35rem;line-height:1.45}
+.ent-actions{position:absolute;top:0.55rem;right:0.7rem;display:flex;gap:0.2rem}
+.ent-actions button{background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:0.85rem;padding:3px 5px;border-radius:6px}
+.ent-actions button:active{background:var(--bg-soft)}
+.ent-edit:active{color:var(--accent)!important}
+.ent-del:active{color:#c0453a!important}
+.add{background:none;border:1.5px dashed var(--line);color:var(--ink-faint);padding:0.65rem;border-radius:12px;font-size:0.8rem;width:100%;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500}
 .add:active{border-color:var(--accent);color:var(--accent)}
-.cform{display:flex;flex-direction:column;gap:0.5rem}
-.cform input,.cform select,.cform textarea{background:var(--card);border:1px solid var(--line);color:var(--ink);padding:0.6rem 0.75rem;border-radius:10px;font-size:0.85rem;font-family:'Inter',sans-serif;outline:none;width:100%}
-.cform input:focus,.cform textarea:focus{border-color:var(--accent)}
-.cform textarea{resize:none;height:64px;line-height:1.4}
-.cform select option{background:var(--card)}
+.eform{display:flex;flex-direction:column;gap:0.5rem;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:0.8rem}
+.eform input,.eform select,.eform textarea{background:var(--bg);border:1px solid var(--line);color:var(--ink);padding:0.6rem 0.75rem;border-radius:10px;font-size:0.85rem;font-family:'Inter',sans-serif;outline:none;width:100%}
+.eform input:focus,.eform textarea:focus{border-color:var(--accent)}
+.eform textarea{resize:none;height:72px;line-height:1.4}
+.eform select option{background:var(--card)}
 .frow{display:flex;gap:0.5rem}
 .f-ok{flex:1;background:var(--you);color:#fff;border:none;border-radius:10px;padding:0.6rem;font-size:0.82rem;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif}
 .f-cl{flex:1;background:var(--bg-soft);color:var(--ink-soft);border:none;border-radius:10px;padding:0.6rem;font-size:0.82rem;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif}
-
 .legend{display:flex;flex-wrap:wrap;gap:0.6rem 1rem;padding:0.3rem 0}
 .leg{display:flex;align-items:center;gap:0.35rem;font-size:0.72rem;color:var(--ink-soft)}
 .leg .sw{width:10px;height:10px;border-radius:3px}
+.quota-note{font-size:0.7rem;color:var(--ink-faint);line-height:1.5;margin-top:0.5rem}
 </style>
 </head>
 <body>
@@ -214,61 +176,65 @@ header{
     <div class="setup-title">Encre Vivante</div>
     <div class="setup-sub">Roman co-écrit</div>
     <label class="setup-label">Clé API Google Gemini (gratuite)</label>
-    <p class="setup-hint">
-      <b>En 2 minutes :</b><br>
-      1. Va sur <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a><br>
-      2. Connecte-toi avec Google<br>
-      3. Appuie sur <b>« Créer une clé API »</b><br>
-      4. Copie-la et colle-la ici
-    </p>
+    <p class="setup-hint"><b>En 2 minutes :</b><br>1. Va sur <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a><br>2. Connecte-toi avec Google<br>3. Appuie sur <b>« Créer une clé API »</b><br>4. Copie-la et colle-la ici</p>
     <p class="setup-err" id="setup-err">Clé invalide, vérifie-la.</p>
     <input type="password" id="api-key" placeholder="AIza…">
-    <button class="setup-btn" id="save-key">Ouvrir le roman</button>
-    <p class="setup-privacy">🔒 Ta clé et ton histoire restent sur cet appareil.</p>
+    <button class="setup-btn" id="save-key">Continuer</button>
+    <p class="setup-privacy">🔒 Ta clé et tes histoires restent sur cet appareil.</p>
+  </div>
+</div>
+
+<!-- HOME -->
+<div id="home">
+  <div class="home-head">
+    <div class="home-brand"><span class="q">🪶</span><span class="t">Encre Vivante</span></div>
+    <button class="h-btn" id="home-theme">☀︎</button>
+  </div>
+  <div class="home-scroll">
+    <div class="home-inner">
+      <button class="new-story-btn" id="new-story">＋ Nouvelle histoire</button>
+      <div class="lib-label">Mes histoires</div>
+      <div id="lib"></div>
+    </div>
   </div>
 </div>
 
 <!-- APP -->
 <div id="app">
   <header>
-    <button class="h-btn" id="new-btn" title="Nouvelle histoire">＋</button>
-    <div class="h-center">
-      <div class="h-title" id="h-title">Nouveau roman</div>
-    </div>
+    <button class="h-btn" id="back-btn" title="Mes histoires">‹</button>
+    <div class="h-center"><div class="h-title" id="h-title">Roman</div></div>
     <button class="h-btn" id="settings-btn" title="Réglages">☰</button>
-    <button class="h-btn" id="theme-btn" title="Thème">☀︎</button>
   </header>
   <div class="progress"><div class="progress-bar" id="pbar"></div></div>
-
   <div class="pages" id="pages">
-   <div class="page-inner">
-    <div class="welcome" id="welcome">
-      <div class="q">🪶</div>
-      <h1>À vous d'écrire</h1>
-      <p>Écrivez les premières lignes ci-dessous, ou appuyez sur envoyer sans rien écrire pour laisser l'IA commencer.</p>
-      <p class="tip">Définissez vos personnages dans ☰ d'abord.</p>
+    <div class="page-inner">
+      <div class="welcome" id="welcome">
+        <div class="q">🪶</div>
+        <h1>À vous d'écrire</h1>
+        <p>Écrivez les premières lignes ci-dessous, ou appuyez sur envoyer sans rien écrire pour laisser l'IA commencer.</p>
+        <p class="tip">Définissez personnages et lieux dans ☰ d'abord.</p>
+      </div>
+      <div id="story" style="display:none">
+        <div class="story-title" id="s-title">Sans titre</div>
+        <div class="story-sub" id="s-sub">Roman</div>
+        <div id="blocks"></div>
+        <div class="typing" id="typing"><div class="d"></div><div class="d"></div><div class="d"></div></div>
+      </div>
     </div>
-    <div id="story" style="display:none">
-      <div class="story-title" id="s-title">Sans titre</div>
-      <div class="story-sub" id="s-sub">Roman</div>
-      <div id="blocks"></div>
-      <div class="typing" id="typing"><div class="d"></div><div class="d"></div><div class="d"></div></div>
-    </div>
-   </div>
   </div>
-
   <div class="input-zone">
-   <div class="input-inner">
-    <div class="mode-tabs" id="mode-tabs">
-      <button class="mtab active" data-m="ecrire">✍︎ J'écris</button>
-      <button class="mtab" data-m="consigne">✦ Consigne</button>
+    <div class="input-inner">
+      <div class="mode-tabs" id="mode-tabs">
+        <button class="mtab active" data-m="ecrire">✍︎ J'écris</button>
+        <button class="mtab" data-m="consigne">✦ Consigne</button>
+      </div>
+      <div class="input-box">
+        <textarea id="uinput" rows="1" placeholder="Écrivez la suite de l'histoire…"></textarea>
+        <button class="send" id="send">↑</button>
+      </div>
+      <div class="hint" id="hint">Champ vide + envoyer = l'IA continue seule</div>
     </div>
-    <div class="input-box">
-      <textarea id="uinput" rows="1" placeholder="Écrivez la suite de l'histoire…"></textarea>
-      <button class="send" id="send">↑</button>
-    </div>
-    <div class="hint" id="hint">Champ vide + envoyer = l'IA continue seule</div>
-   </div>
   </div>
 </div>
 
@@ -278,17 +244,21 @@ header{
   <div class="handle"></div>
 
   <div class="sec">
-    <div class="sec-label">Code couleur du roman</div>
-    <div class="legend">
-      <div class="leg"><span class="sw" style="background:var(--char)"></span>Personnages</div>
-      <div class="leg"><span class="sw" style="background:var(--desc)"></span>Lieux &amp; descriptions</div>
-      <div class="leg"><span class="sw" style="background:var(--you)"></span>Vos ajouts</div>
-      <div class="leg"><span class="sw" style="background:var(--consigne)"></span>Vos consignes</div>
-    </div>
+    <div class="sec-label">Titre du roman</div>
+    <input id="title-input" class="eform" style="height:auto" placeholder="Sans titre" maxlength="70">
   </div>
 
   <div class="sec">
-    <div class="sec-label">Longueur des réponses de l'IA</div>
+    <div class="sec-label">Modèle IA <span class="sub">Flash-Lite = plus de marge quotidienne. En cas de limite, bascule automatique.</span></div>
+    <div class="pills" id="model">
+      <button class="pill active" data-mdl="gemini-2.5-flash-lite">Flash-Lite ·  ~1000/j</button>
+      <button class="pill" data-mdl="gemini-2.5-flash">Flash · qualité +</button>
+    </div>
+    <div class="quota-note">La limite quotidienne est fixée par Google (pas par l'app) et se réinitialise chaque nuit (9h heure de Paris). Flash-Lite offre le plus de requêtes gratuites.</div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-label">Longueur des réponses</div>
     <div class="pills" id="len">
       <button class="pill active" data-l="court">Court</button>
       <button class="pill" data-l="moyen">Moyen</button>
@@ -319,136 +289,244 @@ header{
 
   <div class="sec">
     <div class="sec-label">Personnages</div>
-    <div id="chars"></div>
-    <div id="cform-area"><button class="add" id="add-btn">＋ Ajouter un personnage</button></div>
+    <div id="chars" class="entity-list"></div>
+    <div id="cform-area"><button class="add" id="add-char">＋ Ajouter un personnage</button></div>
   </div>
 
   <div class="sec">
-    <div class="sec-label">Exporter / Clé</div>
+    <div class="sec-label">Lieux</div>
+    <div id="places" class="entity-list"></div>
+    <div id="pform-area"><button class="add" id="add-place">＋ Ajouter un lieu</button></div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-label">Code couleur du roman</div>
+    <div class="legend">
+      <div class="leg"><span class="sw" style="background:var(--char)"></span>Personnages</div>
+      <div class="leg"><span class="sw" style="background:var(--desc)"></span>Lieux &amp; descriptions</div>
+      <div class="leg"><span class="sw" style="background:var(--you)"></span>Vos ajouts</div>
+      <div class="leg"><span class="sw" style="background:var(--consigne)"></span>Vos consignes</div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-label">Actions</div>
     <div class="frow">
-      <button class="f-cl" id="export-btn" style="flex:1">💾 Exporter le roman</button>
-      <button class="f-cl" id="change-key" style="flex:1">🔑 Changer la clé</button>
+      <button class="f-cl" id="export-btn">💾 Exporter</button>
+      <button class="f-cl" id="change-key">🔑 Clé API</button>
     </div>
   </div>
 </div>
 
 <script>
-const KEYS={api:'ev_gemini_key',story:'ev_story_v3',theme:'ev_theme'};
-let apiKey=localStorage.getItem(KEYS.api)||'';
+/* ═══════════ STORAGE ═══════════ */
+const K={api:'ev_gemini_key',lib:'ev_library_v1',theme:'ev_theme',model:'ev_model'};
+let apiKey=localStorage.getItem(K.api)||'';
+let model=localStorage.getItem(K.model)||'gemini-2.5-flash-lite';
 
-let state={genre:'Fantaisie',pov:'Troisième personne',length:'court',chars:[],title:'',history:[],started:false};
+// library = array of stories; each story is a full state object
+let library=[];
+let current=null; // reference to the active story object
 
-function save(){try{localStorage.setItem(KEYS.story,JSON.stringify(state))}catch(e){}}
-function load(){try{const r=localStorage.getItem(KEYS.story);if(r){const s=JSON.parse(r);if(s&&typeof s==='object')state=Object.assign(state,s)}}catch(e){}}
+function loadLib(){try{const r=localStorage.getItem(K.lib);if(r)library=JSON.parse(r)||[]}catch(e){library=[]}}
+function saveLib(){try{localStorage.setItem(K.lib,JSON.stringify(library))}catch(e){}}
 
-/* THEME */
-function applyTheme(t){
-  document.documentElement.setAttribute('data-theme',t);
-  document.getElementById('theme-btn').textContent = t==='dark'?'☾':'☀︎';
-  localStorage.setItem(KEYS.theme,t);
+function newStory(){
+  return {id:'s'+Date.now()+Math.random().toString(36).slice(2,6),
+    title:'',genre:'Fantaisie',pov:'Troisième personne',length:'court',
+    chars:[],places:[],history:[],started:false,updated:Date.now()};
 }
-document.getElementById('theme-btn').addEventListener('click',()=>{
-  const cur=document.documentElement.getAttribute('data-theme');
-  applyTheme(cur==='dark'?'light':'dark');
-});
-applyTheme(localStorage.getItem(KEYS.theme)||'light');
 
-/* SETUP */
-function showSetup(){document.getElementById('setup').classList.remove('hidden');document.getElementById('app').classList.remove('on')}
-function showApp(){document.getElementById('setup').classList.add('hidden');document.getElementById('app').classList.add('on')}
+/* ═══════════ THEME ═══════════ */
+function applyTheme(t){document.documentElement.setAttribute('data-theme',t);
+  const lbl=t==='dark'?'☾':'☀︎';
+  document.getElementById('home-theme').textContent=lbl;
+  localStorage.setItem(K.theme,t);}
+document.getElementById('home-theme').addEventListener('click',()=>{const c=document.documentElement.getAttribute('data-theme');applyTheme(c==='dark'?'light':'dark')});
+applyTheme(localStorage.getItem(K.theme)||'light');
+
+/* ═══════════ SCREENS ═══════════ */
+function showSetup(){document.getElementById('setup').classList.remove('hidden');document.getElementById('home').classList.remove('on');document.getElementById('app').classList.remove('on')}
+function showHome(){document.getElementById('setup').classList.add('hidden');document.getElementById('app').classList.remove('on');document.getElementById('home').classList.add('on');renderLib()}
+function showApp(){document.getElementById('setup').classList.add('hidden');document.getElementById('home').classList.remove('on');document.getElementById('app').classList.add('on')}
+
 document.getElementById('save-key').addEventListener('click',()=>{
-  const k=document.getElementById('api-key').value.trim();
-  const e=document.getElementById('setup-err');e.classList.remove('on');
+  const k=document.getElementById('api-key').value.trim();const e=document.getElementById('setup-err');e.classList.remove('on');
   if(k.length<20){e.classList.add('on');return}
-  apiKey=k;localStorage.setItem(KEYS.api,k);showApp();
+  apiKey=k;localStorage.setItem(K.api,k);showHome();
 });
 document.getElementById('change-key').addEventListener('click',()=>{closeSheet();document.getElementById('api-key').value=apiKey;showSetup()});
 
-/* PROMPT */
+/* ═══════════ LIBRARY UI ═══════════ */
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function storyExcerpt(st){
+  const last=[...st.history].reverse().find(m=>m.role==='model');
+  if(last)return last.text.replace(/[*~]/g,'').slice(0,140);
+  const firstUser=st.history.find(m=>!m.hidden&&m.role==='user');
+  if(firstUser){let t=firstUser.text;const nl=t.indexOf('\n');if(t.startsWith('[')&&nl!==-1)t=t.slice(nl+1);return t.replace(/[*~]/g,'').slice(0,140)}
+  return 'Histoire vide — appuyez pour commencer.';
+}
+function timeAgo(ts){const d=(Date.now()-ts)/1000;
+  if(d<60)return "à l'instant";if(d<3600)return Math.floor(d/60)+' min';
+  if(d<86400)return Math.floor(d/3600)+' h';return Math.floor(d/86400)+' j';}
+function renderLib(){
+  const lib=document.getElementById('lib');
+  if(!library.length){lib.innerHTML='<div class="lib-empty">Aucune histoire pour l\'instant.<br>Appuyez sur « Nouvelle histoire » pour commencer.</div>';return}
+  const sorted=[...library].sort((a,b)=>b.updated-a.updated);
+  lib.innerHTML='<div class="story-cards">'+sorted.map(st=>{
+    const started=st.history.some(m=>!m.hidden);
+    return `<div class="scard" data-id="${st.id}">
+      <div class="scard-title">${esc(st.title||'Sans titre')}</div>
+      <div class="scard-meta">${esc(st.genre)} · ${timeAgo(st.updated)}</div>
+      <div class="scard-excerpt">${esc(storyExcerpt(st))}</div>
+      <div class="scard-continue">${started?'Continuer →':'Commencer →'}</div>
+      <button class="scard-x" data-del="${st.id}">🗑</button>
+    </div>`;
+  }).join('')+'</div>';
+}
+document.getElementById('lib').addEventListener('click',e=>{
+  const del=e.target.closest('[data-del]');
+  if(del){e.stopPropagation();const id=del.dataset.del;
+    if(confirm('Supprimer définitivement cette histoire ?')){library=library.filter(s=>s.id!==id);saveLib();renderLib()}return}
+  const card=e.target.closest('.scard');
+  if(card){openStory(card.dataset.id)}
+});
+document.getElementById('new-story').addEventListener('click',()=>{
+  const st=newStory();library.push(st);saveLib();openStory(st.id);openSheet();
+});
+document.getElementById('back-btn').addEventListener('click',()=>{current&&(current.updated=Date.now());saveLib();showHome()});
+
+/* ═══════════ OPEN A STORY ═══════════ */
+function openStory(id){
+  current=library.find(s=>s.id===id);if(!current)return;
+  // sync settings pills
+  document.getElementById('title-input').value=current.title||'';
+  document.querySelectorAll('#gg .pill').forEach(b=>b.classList.toggle('active',b.dataset.g===current.genre));
+  document.querySelectorAll('#pv .pill').forEach(b=>b.classList.toggle('active',b.dataset.p===current.pov));
+  document.querySelectorAll('#len .pill').forEach(b=>b.classList.toggle('active',b.dataset.l===(current.length||'court')));
+  document.querySelectorAll('#model .pill').forEach(b=>b.classList.toggle('active',b.dataset.mdl===model));
+  renderChars();renderPlaces();updateSub();
+  // render story
+  document.getElementById('blocks').innerHTML='';
+  if(current.started&&current.history.some(m=>!m.hidden)){
+    showStory();
+    current.history.forEach(m=>{
+      if(m.hidden)return;
+      if(m.role==='model'){addBlock(m.text,'ai');return}
+      let clean=m.text;const nl=clean.indexOf('\n');
+      if(clean.startsWith('[')&&nl!==-1)clean=clean.slice(nl+1);
+      if(clean.startsWith('Consigne : '))clean=clean.slice(11);
+      addBlock(clean,m.blockType==='note'?'note':'you');
+    });
+    bumpProgress();
+  }else{
+    document.getElementById('welcome').style.display='';
+    document.getElementById('story').style.display='none';
+    document.getElementById('h-title').textContent=current.title||'Nouveau roman';
+    document.getElementById('pbar').style.width='0%';
+  }
+  showApp();setTimeout(scrollDown,80);
+}
+
+/* ═══════════ PROMPT ═══════════ */
 function buildSys(){
-  const cl=state.chars.length
-    ? state.chars.map(c=>`- ${c.name} (${c.role})${c.desc?' : '+c.desc:''}`).join('\n')
-    : '- Aucun personnage défini pour l\'instant (n\'en invente pas sans consigne claire).';
-  const lengthRule = {
-    court:'TRÈS IMPORTANT — LONGUEUR : écris COURT. Un seul paragraphe, 3 à 5 phrases maximum. Tu poses une scène ou fais avancer un seul moment, puis tu t\'arrêtes pour laisser le lecteur écrire la suite. N\'enchaîne jamais plusieurs événements. Ne termine pas l\'histoire à la place du lecteur.',
-    moyen:'LONGUEUR : écris 2 paragraphes maximum. Fais avancer un moment de la scène, puis arrête-toi pour laisser la main au lecteur.',
+  const st=current;
+  const cl=st.chars.length?st.chars.map(c=>`- ${c.name} (${c.role})${c.desc?' : '+c.desc:''}`).join('\n'):'- Aucun personnage défini (n\'en invente pas sans consigne claire).';
+  const pl=st.places.length?st.places.map(p=>`- ${p.name}${p.desc?' : '+p.desc:''}`).join('\n'):'- Aucun lieu défini pour l\'instant.';
+  const lengthRule={
+    court:'TRÈS IMPORTANT — LONGUEUR : écris COURT. Un seul paragraphe, 3 à 5 phrases maximum. Tu poses un seul moment, puis tu t\'arrêtes pour laisser le lecteur écrire la suite. N\'enchaîne jamais plusieurs événements. Ne conclus pas la scène à la place du lecteur.',
+    moyen:'LONGUEUR : 2 paragraphes maximum. Fais avancer un moment de la scène, puis arrête-toi pour laisser la main au lecteur.',
     long:'LONGUEUR : 3 à 4 paragraphes développés, puis arrête-toi sur un moment ouvert.'
-  }[state.length||'court'];
+  }[st.length||'court'];
   return `Tu es un véritable romancier francophone. Tu co-écris un roman avec le lecteur : il écrit une partie, tu enchaînes la suite comme deux auteurs qui se relaient. Tu ne dis jamais "en tant qu'IA", tu ne commentes jamais hors récit.
 
 ${lengthRule}
 
-═══ DEUX TYPES DE MESSAGES DU LECTEUR ═══
-Chaque message est précédé d'une balise entre crochets :
-1. [TEXTE DU LECTEUR] → prose du roman. Intègre-la telle quelle, puis enchaîne la suite dans le même style.
-2. [CONSIGNE] → PAS du texte de roman. C'est une instruction (changer de direction, décrire un personnage/lieu, faire apparaître un élément, corriger, résumer…). Obéis-y et adapte la suite. Ne recopie jamais la consigne. Prends TOUJOURS la dernière consigne au sérieux et applique-la immédiatement, même si elle change radicalement la direction.
+TERMINE TOUJOURS PAR UNE PHRASE COMPLÈTE. Ne coupe jamais un mot ou une phrase en plein milieu. Si tu approches de ta limite, conclus proprement ta phrase en cours avant de t'arrêter.
 
-═══ BALISAGE COULEUR OBLIGATOIRE ═══
-Dans TOUT ton texte de roman, tu dois baliser certains éléments avec ces marqueurs (l'application les transforme en couleurs) :
-- Les NOMS des personnages : entoure-les de doubles astérisques. Exemple : **Elyan** avança vers **la Vieille Maren**.
-- Les DESCRIPTIONS d'ambiance, de lieux, d'objets ou d'atmosphère sensorielle importantes : entoure le passage de tildes. Exemple : ~La forêt exhalait une odeur de mousse humide et de résine froide.~
-N'abuse pas du balisage : marque les noms à chaque apparition, et seulement les passages descriptifs vraiment évocateurs (pas chaque phrase). N'utilise ces marqueurs QUE dans le roman, jamais ailleurs. N'utilise aucun autre symbole de formatage (pas de #, pas de listes).
+═══ DEUX TYPES DE MESSAGES ═══
+Chaque message du lecteur est précédé d'une balise :
+1. [TEXTE DU LECTEUR] → prose du roman. Intègre-la telle quelle, puis enchaîne la suite.
+2. [CONSIGNE] → PAS du texte de roman. Instruction à suivre (changer de direction, décrire un personnage/lieu, faire apparaître un élément…). Obéis-y, ne la recopie pas. Prends TOUJOURS la dernière consigne au sérieux, même si elle change radicalement la direction.
 
-═══ MISE EN FORME DES DIALOGUES ═══
-Chaque réplique parlée commence par un tiret cadratin « — » et se place sur SA PROPRE LIGNE, séparée par un saut de ligne. Ne mets jamais deux répliques différentes à la suite sur la même ligne. Sépare l'action de la parole. Exemple :
+═══ BALISAGE COULEUR ═══
+- NOMS des personnages : entoure de doubles astérisques. Ex : **Elyan** salua **Maren**.
+- DESCRIPTIONS d'ambiance/lieux/atmosphère évocatrices : entoure de tildes. Ex : ~une odeur de mousse humide et de résine froide~.
+N'abuse pas : noms à chaque apparition, descriptions seulement quand c'est évocateur. Ces marqueurs UNIQUEMENT dans le roman. Aucun autre symbole (#, listes).
+
+═══ DIALOGUES ═══
+Chaque réplique parlée commence par un tiret cadratin « — » sur SA PROPRE LIGNE, séparée par un saut de ligne. N'utilise JAMAIS les guillemets « » pour les dialogues : toujours le tiret. Ne mets jamais deux répliques sur la même ligne. Sépare l'action de la parole. Exemple :
 — Tu es en retard, souffla **Maren** sans lever les yeux.
-**Elyan** s'immobilisa sur le seuil.
+**Elyan** s'immobilisa.
 — Je sais. Pardon.
 
-GENRE : ${state.genre}
-POINT DE VUE (strict) : ${state.pov}
+GENRE : ${st.genre}
+POINT DE VUE (strict) : ${st.pov}
 
-PERSONNAGES ÉTABLIS :
+PERSONNAGES :
 ${cl}
 
-═══ CHARTE D'ÉCRITURE ═══
-STYLE : écris comme un auteur publié, fluide et immersif ; bannis le robotique et les répétitions ; varie la longueur des phrases ; vocabulaire riche mais naturel ; montre les émotions plutôt que de les nommer.
-SCÈNES : développe les scènes importantes, ne les résume jamais ; donne une vraie ambiance (les cinq sens quand pertinent) ; laisse le temps aux personnages de vivre les événements.
-PERSONNAGES : respecte intégralement personnalité, âge et vécu ; aucun changement de comportement sans raison crédible ; chaque personnage a sa façon de parler ; émotions progressives.
-DIALOGUES : naturels et humains ; ajoute silences, hésitations, regards, gestes ; les personnages peuvent s'interrompre ou taire des choses.
-COHÉRENCE : respecte tout ce qui a été établi (événements, blessures, secrets, relations, chronologie) ; les conséquences ont un impact réel ; ne contredis jamais une info donnée.
-ROMANCE éventuelle : évolue lentement, par regards, silences, attentions et confiance.
-RYTHME : alterne calme, dialogue, action, introspection ; ne précipite jamais vers un objectif.
-NARRATION : respecte strictement le point de vue ; ne révèle pas les pensées qu'il ne permet pas de connaître ; évite les répétitions de formulations.
+LIEUX :
+${pl}
 
-Tu écris uniquement le roman (ou la réponse à une consigne), avec le balisage couleur. Respecte impérativement la contrainte de longueur indiquée en haut.`;
+═══ CHARTE ═══
+Écris comme un auteur publié : fluide, immersif, sans robotique ni répétitions ; varie la longueur des phrases ; montre les émotions plutôt que de les nommer. Développe les scènes importantes, donne une vraie ambiance (les cinq sens quand pertinent). Respecte intégralement personnalité, âge et vécu des personnages ; pas de changement de comportement sans raison. Dialogues naturels avec silences, hésitations, gestes. Respecte tout ce qui a été établi (événements, blessures, secrets, relations, chronologie). Respecte strictement le point de vue : ne révèle pas les pensées qu'il ne permet pas de connaître.
+
+Tu écris uniquement le roman (ou la réponse à une consigne), avec le balisage et la contrainte de longueur.`;
 }
 
+/* ═══════════ API CALL with fallback ═══════════ */
+const MODELS_ORDER=['gemini-2.5-flash-lite','gemini-2.5-flash','gemini-2.0-flash'];
 async function callGemini(msg,hidden,blockType){
-  state.history.push({role:'user',text:msg,hidden:!!hidden,blockType:blockType||null});save();
-  const contents=state.history.map(m=>({role:m.role,parts:[{text:m.text}]}));
-  const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-  const maxTok={court:320,moyen:700,long:1200}[state.length||'court'];
-  async function attempt(){
+  current.history.push({role:'user',text:msg,hidden:!!hidden,blockType:blockType||null});
+  current.updated=Date.now();saveLib();
+  const contents=current.history.map(m=>({role:m.role,parts:[{text:m.text}]}));
+  const maxTok={court:400,moyen:800,long:1300}[current.length||'court'];
+  const sys=buildSys();
+
+  async function tryModel(mdl){
+    const url=`https://generativelanguage.googleapis.com/v1beta/models/${mdl}:generateContent?key=${apiKey}`;
     return fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({system_instruction:{parts:[{text:buildSys()}]},contents,generationConfig:{maxOutputTokens:maxTok,temperature:0.95}})});
+      body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents,generationConfig:{maxOutputTokens:maxTok,temperature:0.95}})});
   }
-  let r=await attempt();
-  if(r.status===429){await new Promise(x=>setTimeout(x,4000));r=await attempt()}
-  if(!r.ok){
-    state.history.pop();save();
-    let d='';try{const j=await r.json();d=j.error?.message||''}catch(e){}
-    if(r.status===400||r.status===403)throw new Error('CLE:'+d);
-    if(r.status===429)throw new Error('QUOTA:'+d);
-    throw new Error('API:'+d);
+
+  // ordered list: selected model first, then the others as fallback
+  const order=[model,...MODELS_ORDER.filter(m=>m!==model)];
+  let lastDetail='',lastStatus=0;
+  for(let i=0;i<order.length;i++){
+    let r;
+    try{r=await tryModel(order[i])}catch(e){lastDetail='réseau';continue}
+    if(r.status===429){
+      // rate/quota — brief wait then retry same model once, else fall through to next model
+      await new Promise(x=>setTimeout(x,3500));
+      try{r=await tryModel(order[i])}catch(e){}
+    }
+    if(r.ok){
+      const j=await r.json();
+      const t=j.candidates?.[0]?.content?.parts?.[0]?.text;
+      if(t){current.history.push({role:'model',text:t,hidden:false});current.updated=Date.now();saveLib();return t}
+      lastDetail='réponse vide';continue;
+    }
+    lastStatus=r.status;
+    try{const j=await r.json();lastDetail=j.error?.message||''}catch(e){}
+    if(r.status===400||r.status===403){break} // key problem — no point trying others
+    // 429/500 on this model -> try next model in loop
   }
-  const j=await r.json();
-  const t=j.candidates?.[0]?.content?.parts?.[0]?.text||'…';
-  state.history.push({role:'model',text:t,hidden:false});save();
-  return t;
+  current.history.pop();current.updated=Date.now();saveLib();
+  if(lastStatus===400||lastStatus===403)throw new Error('CLE:'+lastDetail);
+  if(lastStatus===429)throw new Error('QUOTA:'+lastDetail);
+  throw new Error('API:'+lastDetail);
 }
 
-/* RENDER with color markup */
-function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+/* ═══════════ RENDER TEXT ═══════════ */
 function markup(raw){
-  // Normalise : les répliques de dialogue passent sur leur propre ligne.
-  // On force un saut de paragraphe avant chaque tiret de dialogue.
   let txt=raw.replace(/\r/g,'');
-  // Uniformise les différents tirets de dialogue en tiret cadratin
+  // Convertit d'éventuels dialogues en guillemets « ... » vers le tiret
+  txt=txt.replace(/«\s*/g,'\n\n— ').replace(/\s*»/g,'');
+  // Uniformise les tirets de début de ligne
   txt=txt.replace(/^[ \t]*[-–—]\s?/gm,'— ');
   // Un tiret de dialogue en milieu de ligne -> nouveau paragraphe
-  txt=txt.replace(/([.!?…»"])\s+—\s/g,'$1\n\n— ');
-
+  txt=txt.replace(/([.!?…"])\s+—\s/g,'$1\n\n— ');
   const paras=txt.split(/\n{2,}/).map(p=>p.trim()).filter(Boolean);
   return paras.map(p=>{
     const isDlg=/^—\s/.test(p);
@@ -456,137 +534,149 @@ function markup(raw){
     h=h.replace(/\*\*([^*]+)\*\*/g,'<span class="nom">$1</span>');
     h=h.replace(/~([^~]+)~/g,'<span class="descr">$1</span>');
     h=h.replace(/\n/g,'<br>');
-    if(isDlg){
-      h=h.replace(/^—\s/,'<span class="dash">—</span> ');
-      return '<p class="dialogue">'+h+'</p>';
-    }
+    if(isDlg){h=h.replace(/^—\s/,'<span class="dash">—</span> ');return '<p class="dialogue">'+h+'</p>'}
     return '<p>'+h+'</p>';
   }).join('');
 }
-
 function addBlock(txt,who){
-  const b=document.getElementById('blocks');
-  const div=document.createElement('div');
-  div.className='blk';
-  if(who==='ai'){
-    div.innerHTML='<div class="blk-roman">'+markup(txt)+'</div>';
-  }else if(who==='you'){
-    div.innerHTML='<div class="blk-you"><span class="tag">Vous · ajout</span><div class="txt">'+esc(txt)+'</div></div>';
-  }else if(who==='note'){
-    div.innerHTML='<div class="blk-consigne"><span class="tag">Vous · consigne</span><div class="txt">'+esc(txt)+'</div></div>';
-  }
-  b.appendChild(div);
-  scrollDown();
+  const b=document.getElementById('blocks');const div=document.createElement('div');div.className='blk';
+  if(who==='ai')div.innerHTML='<div class="blk-roman">'+markup(txt)+'</div>';
+  else if(who==='you')div.innerHTML='<div class="blk-you"><span class="tag">Vous · ajout</span><div class="txt">'+esc(txt)+'</div></div>';
+  else if(who==='note')div.innerHTML='<div class="blk-consigne"><span class="tag">Vous · consigne</span><div class="txt">'+esc(txt)+'</div></div>';
+  b.appendChild(div);scrollDown();return div;
 }
 function scrollDown(){const p=document.getElementById('pages');p.scrollTop=p.scrollHeight}
 
-/* UI */
-document.getElementById('gg').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;document.querySelectorAll('#gg .pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.genre=b.dataset.g;updateSub();save()});
-document.getElementById('pv').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;document.querySelectorAll('#pv .pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.pov=b.dataset.p;updateSub();save()});
-document.getElementById('len').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;document.querySelectorAll('#len .pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.length=b.dataset.l;save()});
-function updateSub(){document.getElementById('s-sub').textContent=state.genre+' · '+state.pov}
+/* ═══════════ SETTINGS PILLS ═══════════ */
+document.getElementById('gg').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;document.querySelectorAll('#gg .pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');current.genre=b.dataset.g;updateSub();saveLib()});
+document.getElementById('pv').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;document.querySelectorAll('#pv .pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');current.pov=b.dataset.p;updateSub();saveLib()});
+document.getElementById('len').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;document.querySelectorAll('#len .pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');current.length=b.dataset.l;saveLib()});
+document.getElementById('model').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;document.querySelectorAll('#model .pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');model=b.dataset.mdl;localStorage.setItem(K.model,model)});
+document.getElementById('title-input').addEventListener('input',function(){current.title=this.value;document.getElementById('s-title').textContent=this.value||'Sans titre';document.getElementById('h-title').textContent=this.value||'Roman';saveLib()});
+function updateSub(){document.getElementById('s-sub').textContent=current.genre+' · '+current.pov}
 
 function openSheet(){document.getElementById('overlay').classList.add('on');document.getElementById('sheet').classList.add('on')}
 function closeSheet(){document.getElementById('overlay').classList.remove('on');document.getElementById('sheet').classList.remove('on')}
 document.getElementById('settings-btn').addEventListener('click',openSheet);
 document.getElementById('overlay').addEventListener('click',closeSheet);
 
-/* Chars */
+/* ═══════════ ENTITIES (chars + places) with EDIT ═══════════ */
 function renderChars(){
   const l=document.getElementById('chars');l.innerHTML='';
-  state.chars.forEach((c,i)=>{
-    const d=document.createElement('div');d.className='cc';
-    d.innerHTML=`<div class="cc-name">${esc(c.name)}</div><div class="cc-role">${esc(c.role)}</div>${c.desc?`<div class="cc-desc">${esc(c.desc)}</div>`:''}<button class="cc-x" data-i="${i}">✕</button>`;
+  current.chars.forEach((c,i)=>{
+    const d=document.createElement('div');d.className='ent char';
+    d.innerHTML=`<div class="ent-name">${esc(c.name)}</div><div class="ent-role">${esc(c.role)}</div>${c.desc?`<div class="ent-desc">${esc(c.desc)}</div>`:''}
+      <div class="ent-actions"><button class="ent-edit" data-edit="${i}">✎</button><button class="ent-del" data-del="${i}">✕</button></div>`;
     l.appendChild(d);
   });
 }
-document.getElementById('chars').addEventListener('click',e=>{const b=e.target.closest('.cc-x');if(!b)return;state.chars.splice(+b.dataset.i,1);renderChars();save()});
-let addOpen=false;
-function initAdd(){const b=document.getElementById('add-btn');if(b)b.addEventListener('click',openAdd)}
-function openAdd(){
-  if(addOpen)return;addOpen=true;
-  document.getElementById('cform-area').innerHTML=`
-    <div class="cform">
-      <input id="cn" placeholder="Nom du personnage" maxlength="40">
-      <select id="cr"><option>Protagoniste</option><option>Antagoniste</option><option>Allié</option><option>Mystérieux</option><option>Mentor</option><option>Secondaire</option></select>
-      <textarea id="cd" placeholder="Personnalité, âge, vécu, façon de parler…"></textarea>
-      <div class="frow"><button class="f-ok" id="cok">Ajouter</button><button class="f-cl" id="ccl">Annuler</button></div>
-    </div>`;
-  document.getElementById('cok').onclick=()=>{const n=document.getElementById('cn').value.trim();if(!n)return;state.chars.push({name:n,role:document.getElementById('cr').value,desc:document.getElementById('cd').value.trim()});renderChars();save();closeAdd()};
-  document.getElementById('ccl').onclick=closeAdd;
+function renderPlaces(){
+  const l=document.getElementById('places');l.innerHTML='';
+  current.places.forEach((p,i)=>{
+    const d=document.createElement('div');d.className='ent place';
+    d.innerHTML=`<div class="ent-name">${esc(p.name)}</div>${p.desc?`<div class="ent-desc">${esc(p.desc)}</div>`:''}
+      <div class="ent-actions"><button class="ent-edit" data-edit="${i}">✎</button><button class="ent-del" data-del="${i}">✕</button></div>`;
+    l.appendChild(d);
+  });
 }
-function closeAdd(){addOpen=false;document.getElementById('cform-area').innerHTML='<button class="add" id="add-btn">＋ Ajouter un personnage</button>';initAdd()}
-initAdd();
 
-/* New / export */
-document.getElementById('new-btn').addEventListener('click',()=>{
-  if(!confirm('Nouvelle histoire ?\n\nL\'actuelle sera effacée. Pense à l\'exporter avant (💾).'))return;
-  state.history=[];state.started=false;state.title='';save();
-  document.getElementById('welcome').style.display='';
-  document.getElementById('story').style.display='none';
-  document.getElementById('blocks').innerHTML='';
-  document.getElementById('h-title').textContent='Nouveau roman';
-  document.getElementById('pbar').style.width='0%';
+// CHARACTER form (add + edit)
+let charFormOpen=false;
+function charForm(idx){
+  charFormOpen=true;
+  const c=idx!=null?current.chars[idx]:{name:'',role:'Protagoniste',desc:''};
+  const roles=['Protagoniste','Antagoniste','Allié','Mystérieux','Mentor','Secondaire'];
+  document.getElementById('cform-area').innerHTML=`<div class="eform">
+    <input id="cn" placeholder="Nom" maxlength="40" value="${esc(c.name)}">
+    <select id="cr">${roles.map(r=>`<option${r===c.role?' selected':''}>${r}</option>`).join('')}</select>
+    <textarea id="cd" placeholder="Personnalité, âge, vécu, façon de parler, apparence…">${esc(c.desc)}</textarea>
+    <div class="frow"><button class="f-ok" id="cok">${idx!=null?'Enregistrer':'Ajouter'}</button><button class="f-cl" id="ccl">Annuler</button></div>
+  </div>`;
+  document.getElementById('cok').onclick=()=>{const n=document.getElementById('cn').value.trim();if(!n)return;
+    const obj={name:n,role:document.getElementById('cr').value,desc:document.getElementById('cd').value.trim()};
+    if(idx!=null)current.chars[idx]=obj;else current.chars.push(obj);
+    renderChars();saveLib();closeCharForm()};
+  document.getElementById('ccl').onclick=closeCharForm;
+}
+function closeCharForm(){charFormOpen=false;document.getElementById('cform-area').innerHTML='<button class="add" id="add-char">＋ Ajouter un personnage</button>';document.getElementById('add-char').onclick=()=>!charFormOpen&&charForm(null)}
+document.getElementById('add-char').onclick=()=>!charFormOpen&&charForm(null);
+document.getElementById('chars').addEventListener('click',e=>{
+  const ed=e.target.closest('[data-edit]');const del=e.target.closest('[data-del]');
+  if(ed&&!charFormOpen){charForm(+ed.dataset.edit)}
+  else if(del){current.chars.splice(+del.dataset.del,1);renderChars();saveLib()}
 });
+
+// PLACE form (add + edit)
+let placeFormOpen=false;
+function placeForm(idx){
+  placeFormOpen=true;
+  const p=idx!=null?current.places[idx]:{name:'',desc:''};
+  document.getElementById('pform-area').innerHTML=`<div class="eform">
+    <input id="pn" placeholder="Nom du lieu" maxlength="40" value="${esc(p.name)}">
+    <textarea id="pd" placeholder="Ambiance, apparence, sons, odeurs, histoire du lieu…">${esc(p.desc)}</textarea>
+    <div class="frow"><button class="f-ok" id="pok">${idx!=null?'Enregistrer':'Ajouter'}</button><button class="f-cl" id="pcl">Annuler</button></div>
+  </div>`;
+  document.getElementById('pok').onclick=()=>{const n=document.getElementById('pn').value.trim();if(!n)return;
+    const obj={name:n,desc:document.getElementById('pd').value.trim()};
+    if(idx!=null)current.places[idx]=obj;else current.places.push(obj);
+    renderPlaces();saveLib();closePlaceForm()};
+  document.getElementById('pcl').onclick=closePlaceForm;
+}
+function closePlaceForm(){placeFormOpen=false;document.getElementById('pform-area').innerHTML='<button class="add" id="add-place">＋ Ajouter un lieu</button>';document.getElementById('add-place').onclick=()=>!placeFormOpen&&placeForm(null)}
+document.getElementById('add-place').onclick=()=>!placeFormOpen&&placeForm(null);
+document.getElementById('places').addEventListener('click',e=>{
+  const ed=e.target.closest('[data-edit]');const del=e.target.closest('[data-del]');
+  if(ed&&!placeFormOpen){placeForm(+ed.dataset.edit)}
+  else if(del){current.places.splice(+del.dataset.del,1);renderPlaces();saveLib()}
+});
+
+/* ═══════════ EXPORT ═══════════ */
 document.getElementById('export-btn').addEventListener('click',()=>{
-  const parts=state.history.filter(m=>!m.hidden&&m.blockType!=='note');
+  const parts=current.history.filter(m=>!m.hidden&&m.blockType!=='note');
   if(!parts.length){alert('Rien à exporter.');return}
-  let txt=(state.title||'Sans titre')+'\n\n';
+  let txt=(current.title||'Sans titre')+'\n\n';
   parts.forEach(m=>{let t=m.text;const nl=t.indexOf('\n\n');if(t.startsWith('[')&&nl!==-1)t=t.slice(nl+2);txt+=t.replace(/\*\*/g,'').replace(/~/g,'').trim()+'\n\n'});
-  const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(state.title||'mon-roman')+'.txt';a.click();
+  const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=(current.title||'mon-roman')+'.txt';a.click();
 });
 
-/* MODE */
+/* ═══════════ MODE ═══════════ */
 let mode='ecrire';
-document.getElementById('mode-tabs').addEventListener('click',e=>{
-  const b=e.target.closest('.mtab');if(!b)return;
-  document.querySelectorAll('.mtab').forEach(x=>x.classList.remove('active'));b.classList.add('active');
-  mode=b.dataset.m;
+document.getElementById('mode-tabs').addEventListener('click',e=>{const b=e.target.closest('.mtab');if(!b)return;
+  document.querySelectorAll('.mtab').forEach(x=>x.classList.remove('active'));b.classList.add('active');mode=b.dataset.m;
   const inp=document.getElementById('uinput'),hint=document.getElementById('hint');
   if(mode==='consigne'){inp.placeholder='Ex : décris les personnages · fais apparaître un dragon · change de lieu…';hint.textContent='Une consigne guide l\'IA sans être écrite dans le roman'}
   else{inp.placeholder='Écrivez la suite de l\'histoire…';hint.textContent='Champ vide + envoyer = l\'IA continue seule'}
 });
 
-/* SEND */
+/* ═══════════ SEND ═══════════ */
 let loading=false;
 function setLoad(v){loading=v;document.getElementById('typing').classList.toggle('on',v);document.getElementById('send').disabled=v;if(v)scrollDown()}
-function showStory(){
-  document.getElementById('welcome').style.display='none';
-  document.getElementById('story').style.display='block';
-  document.getElementById('s-title').textContent=state.title||'Sans titre';
-  document.getElementById('h-title').textContent=state.title||'Roman en cours';
-  updateSub();
-}
-function bumpProgress(){
-  const n=state.history.filter(m=>!m.hidden).length;
-  document.getElementById('pbar').style.width=Math.min(95,15+n*6)+'%';
-}
-function handleErr(e){
-  const [c,d]=(e.message||'').split(':');
+function showStory(){document.getElementById('welcome').style.display='none';document.getElementById('story').style.display='block';
+  document.getElementById('s-title').textContent=current.title||'Sans titre';
+  document.getElementById('h-title').textContent=current.title||'Roman en cours';updateSub()}
+function bumpProgress(){const n=current.history.filter(m=>!m.hidden).length;document.getElementById('pbar').style.width=Math.min(95,12+n*6)+'%'}
+function handleErr(e){const [c,d]=(e.message||'').split(':');
   if(c==='CLE'){alert('Clé API invalide ou restreinte.'+(d?'\n\n'+d:''));showSetup()}
-  else if(c==='QUOTA'){addBlock('⏳ Limite gratuite atteinte.'+(d?' ('+d+')':' Attends 1 min.'),'note')}
-  else{addBlock('Erreur.'+(d?' '+d:' Vérifie ta connexion.'),'note')}
+  else if(c==='QUOTA'){const div=addBlock('⏳ Limite quotidienne Gemini atteinte sur tous les modèles gratuits. Elle se réinitialise vers 9h (heure de Paris). Tu peux réessayer plus tard.','note')}
+  else{const div=addBlock('⚠️ Erreur : '+(d||'connexion')+'. Appuyez pour réessayer.','note');
+    const btn=document.createElement('button');btn.className='retry-btn';btn.textContent='↻ Réessayer';
+    btn.onclick=()=>{div.remove();retryLast()};div.querySelector('.blk-consigne').appendChild(btn)}
 }
+let lastSend=null;
+async function retryLast(){if(!lastSend)return;const {apiMsg,vis}=lastSend;setLoad(true);
+  try{const r=await callGemini(apiMsg,!vis,vis?vis.who:null);addBlock(r,'ai');bumpProgress()}catch(e){handleErr(e)}setLoad(false)}
 
 async function send(){
-  if(loading)return;
+  if(loading||!current)return;
   const inp=document.getElementById('uinput');const txt=inp.value.trim();
-  if(!state.started)showStory();
-  state.started=true;save();
-
+  if(!current.started)showStory();
+  current.started=true;current.updated=Date.now();saveLib();
   let apiMsg,vis=null;
-  if(mode==='consigne'&&txt){
-    apiMsg=`[CONSIGNE — ce n'est pas du texte de roman. Suis cette instruction et adapte la suite. Ne la recopie pas.]\nConsigne : ${txt}`;
-    vis={txt,who:'note'};inp.value='';inp.style.height='auto';
-  }else if(txt){
-    apiMsg=`[TEXTE DU LECTEUR — intègre-le au roman tel quel, puis enchaîne la suite dans le même style.]\n${txt}`;
-    vis={txt,who:'you'};inp.value='';inp.style.height='auto';
-  }else{
-    apiMsg=state.history.length===0
-      ? "(Interne, ne pas répéter) Commence le roman : écris les premières pages, installe l'atmosphère et présente les personnages établis, en suivant la charte et le balisage couleur."
-      : "(Interne, ne pas répéter) Continue le roman là où il s'est arrêté, en respectant tout ce qui précède, la charte et le balisage couleur.";
-  }
+  if(mode==='consigne'&&txt){apiMsg=`[CONSIGNE — pas du texte de roman. Suis cette instruction, adapte la suite, ne la recopie pas.]\nConsigne : ${txt}`;vis={txt,who:'note'};inp.value='';inp.style.height='auto'}
+  else if(txt){apiMsg=`[TEXTE DU LECTEUR — intègre-le au roman tel quel, puis enchaîne la suite dans le même style.]\n${txt}`;vis={txt,who:'you'};inp.value='';inp.style.height='auto'}
+  else{apiMsg=current.history.length===0?"(Interne, ne pas répéter) Commence le roman : premières pages, installe l'atmosphère, présente les personnages et lieux établis, suis la charte et le balisage.":"(Interne, ne pas répéter) Continue le roman là où il s'est arrêté, en respectant tout ce qui précède, la charte et le balisage."}
+  lastSend={apiMsg,vis};
   if(vis)addBlock(vis.txt,vis.who);
   setLoad(true);
   try{const r=await callGemini(apiMsg,!vis,vis?vis.who:null);addBlock(r,'ai');bumpProgress()}
@@ -596,26 +686,9 @@ async function send(){
 document.getElementById('send').addEventListener('click',send);
 document.getElementById('uinput').addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,150)+'px'});
 
-/* RESTORE */
-load();
-document.querySelectorAll('#gg .pill').forEach(b=>b.classList.toggle('active',b.dataset.g===state.genre));
-document.querySelectorAll('#pv .pill').forEach(b=>b.classList.toggle('active',b.dataset.p===state.pov));
-document.querySelectorAll('#len .pill').forEach(b=>b.classList.toggle('active',b.dataset.l===(state.length||'court')));
-renderChars();updateSub();
-if(state.started&&state.history.length){
-  showStory();
-  state.history.forEach(m=>{
-    if(m.hidden)return;
-    if(m.role==='model'){addBlock(m.text,'ai');return}
-    let clean=m.text;const nl=clean.indexOf('\n');
-    if(clean.startsWith('[')&&nl!==-1)clean=clean.slice(nl+1);
-    if(clean.startsWith('Consigne : '))clean=clean.slice(11);
-    addBlock(clean,m.blockType==='note'?'note':'you');
-  });
-  bumpProgress();
-  setTimeout(scrollDown,100);
-}
-if(apiKey)showApp();else showSetup();
+/* ═══════════ BOOT ═══════════ */
+loadLib();
+if(apiKey)showHome();else showSetup();
 </script>
 </body>
 </html>
