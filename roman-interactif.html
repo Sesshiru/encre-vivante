@@ -79,8 +79,6 @@ header{display:flex;align-items:center;gap:0.4rem;padding:max(0.7rem,env(safe-ar
 .h-btn:active{background:var(--bg-soft)}
 .h-center{flex:1;text-align:center;overflow:hidden}
 .h-title{font-size:0.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.progress{height:2px;background:var(--line);margin:0 1.1rem;border-radius:2px;overflow:hidden;flex-shrink:0}
-.progress-bar{height:100%;width:0%;background:var(--accent);border-radius:2px;transition:width .4s}
 .pages{flex:1;overflow-y:auto;padding:1.4rem 1.3rem 1rem;-webkit-overflow-scrolling:touch}
 .pages::-webkit-scrollbar{width:0}
 .page-inner{max-width:620px;margin:0 auto;width:100%}
@@ -92,6 +90,7 @@ header{display:flex;align-items:center;gap:0.4rem;padding:max(0.7rem,env(safe-ar
 .story-title{font-family:'Fraunces',serif;font-weight:600;font-size:1.6rem;text-align:center;margin-bottom:0.3rem}
 .story-sub{font-size:0.64rem;text-align:center;color:var(--ink-faint);letter-spacing:.16em;text-transform:uppercase;margin-bottom:1.6rem}
 .blk{margin-bottom:1.5rem;animation:fade .4s ease}
+.blk:not(:first-child){border-top:1px solid var(--line);padding-top:1.4rem}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .blk-roman{font-family:'Fraunces',serif;font-weight:400;font-size:1.14rem;line-height:1.72;color:var(--ink);letter-spacing:-0.003em}
 .blk-roman p{margin-bottom:0.9rem}
@@ -165,6 +164,13 @@ header{display:flex;align-items:center;gap:0.4rem;padding:max(0.7rem,env(safe-ar
 .leg{display:flex;align-items:center;gap:0.35rem;font-size:0.72rem;color:var(--ink-soft)}
 .leg .sw{width:10px;height:10px;border-radius:3px}
 .quota-note{font-size:0.7rem;color:var(--ink-faint);line-height:1.5;margin-top:0.5rem}
+.save-btn{width:100%;background:var(--ink);color:var(--bg);border:none;border-radius:12px;padding:0.85rem;font-size:0.88rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:0.45rem;transition:background .25s,transform .1s;margin-bottom:0.6rem}
+.save-btn:active{transform:scale(.98)}
+.save-btn.saved{background:var(--you)}
+.save-btn.save-err{background:#c0453a}
+@keyframes save-pop{0%{transform:scale(1)}45%{transform:scale(1.06)}100%{transform:scale(1)}}
+.save-btn.saved,.save-btn.save-err{animation:save-pop .35s ease}
+.save-hint{font-size:0.68rem;color:var(--ink-faint);text-align:center;margin:-0.2rem 0 0.8rem}
 </style>
 </head>
 <body>
@@ -206,7 +212,6 @@ header{display:flex;align-items:center;gap:0.4rem;padding:max(0.7rem,env(safe-ar
     <div class="h-center"><div class="h-title" id="h-title">Roman</div></div>
     <button class="h-btn" id="settings-btn" title="Réglages">☰</button>
   </header>
-  <div class="progress"><div class="progress-bar" id="pbar"></div></div>
   <div class="pages" id="pages">
     <div class="page-inner">
       <div class="welcome" id="welcome">
@@ -258,15 +263,6 @@ header{display:flex;align-items:center;gap:0.4rem;padding:max(0.7rem,env(safe-ar
   </div>
 
   <div class="sec">
-    <div class="sec-label">Longueur des réponses</div>
-    <div class="pills" id="len">
-      <button class="pill active" data-l="court">Court</button>
-      <button class="pill" data-l="moyen">Moyen</button>
-      <button class="pill" data-l="long">Long</button>
-    </div>
-  </div>
-
-  <div class="sec">
     <div class="sec-label">Genre / ambiance</div>
     <div class="pills" id="gg">
       <button class="pill active" data-g="Fantaisie">Fantaisie</button>
@@ -311,8 +307,10 @@ header{display:flex;align-items:center;gap:0.4rem;padding:max(0.7rem,env(safe-ar
 
   <div class="sec">
     <div class="sec-label">Actions</div>
+    <button class="save-btn" id="save-btn">💾 Enregistrer</button>
+    <div class="save-hint">Tes histoires sont sauvegardées sur cet appareil (mémoire du navigateur)</div>
     <div class="frow">
-      <button class="f-cl" id="export-btn">💾 Exporter</button>
+      <button class="f-cl" id="export-btn">⬇ Exporter</button>
       <button class="f-cl" id="change-key">🔑 Clé API</button>
     </div>
   </div>
@@ -329,11 +327,19 @@ let library=[];
 let current=null; // reference to the active story object
 
 function loadLib(){try{const r=localStorage.getItem(K.lib);if(r)library=JSON.parse(r)||[]}catch(e){library=[]}}
-function saveLib(){try{localStorage.setItem(K.lib,JSON.stringify(library))}catch(e){}}
+// Renvoie true/false selon que l'écriture a réellement réussi (localStorage peut être plein ou bloqué en navigation privée)
+function saveLib(){
+  try{
+    const s=JSON.stringify(library);
+    localStorage.setItem(K.lib,s);
+    // Relit immédiatement pour vérifier que l'écriture a bien été prise en compte par le navigateur
+    return localStorage.getItem(K.lib)===s;
+  }catch(e){console.error('saveLib a échoué',e);return false}
+}
 
 function newStory(){
   return {id:'s'+Date.now()+Math.random().toString(36).slice(2,6),
-    title:'',genre:'Fantaisie',pov:'Troisième personne',length:'court',
+    title:'',genre:'Fantaisie',pov:'Troisième personne',
     chars:[],places:[],history:[],started:false,updated:Date.now()};
 }
 
@@ -403,7 +409,6 @@ function openStory(id){
   document.getElementById('title-input').value=current.title||'';
   document.querySelectorAll('#gg .pill').forEach(b=>b.classList.toggle('active',b.dataset.g===current.genre));
   document.querySelectorAll('#pv .pill').forEach(b=>b.classList.toggle('active',b.dataset.p===current.pov));
-  document.querySelectorAll('#len .pill').forEach(b=>b.classList.toggle('active',b.dataset.l===(current.length||'court')));
   document.querySelectorAll('#model .pill').forEach(b=>b.classList.toggle('active',b.dataset.mdl===model));
   renderChars();renderPlaces();updateSub();
   // render story
@@ -418,12 +423,10 @@ function openStory(id){
       if(clean.startsWith('Consigne : '))clean=clean.slice(11);
       addBlock(clean,m.blockType==='note'?'note':'you');
     });
-    bumpProgress();
   }else{
     document.getElementById('welcome').style.display='';
     document.getElementById('story').style.display='none';
     document.getElementById('h-title').textContent=current.title||'Nouveau roman';
-    document.getElementById('pbar').style.width='0%';
   }
   showApp();setTimeout(scrollDown,80);
 }
@@ -433,15 +436,11 @@ function buildSys(){
   const st=current;
   const cl=st.chars.length?st.chars.map(c=>`- ${c.name} (${c.role})${c.desc?' : '+c.desc:''}`).join('\n'):'- Aucun personnage défini (n\'en invente pas sans consigne claire).';
   const pl=st.places.length?st.places.map(p=>`- ${p.name}${p.desc?' : '+p.desc:''}`).join('\n'):'- Aucun lieu défini pour l\'instant.';
-  const lengthRule={
-    court:'TRÈS IMPORTANT — LONGUEUR : écris COURT. Un seul paragraphe, 3 à 5 phrases maximum. Tu poses un seul moment, puis tu t\'arrêtes pour laisser le lecteur écrire la suite. N\'enchaîne jamais plusieurs événements. Ne conclus pas la scène à la place du lecteur.',
-    moyen:'LONGUEUR : 2 paragraphes maximum. Fais avancer un moment de la scène, puis arrête-toi pour laisser la main au lecteur.',
-    long:'LONGUEUR : 3 à 4 paragraphes développés, puis arrête-toi sur un moment ouvert.'
-  }[st.length||'court'];
   return `Tu es un véritable romancier francophone. Tu co-écris un roman avec le lecteur : il écrit une partie, tu enchaînes la suite comme deux auteurs qui se relaient. Tu ne dis jamais "en tant qu'IA", tu ne commentes jamais hors récit.
 
-${lengthRule}
-
+═══ LONGUEUR ═══
+Pour la suite du roman (après un texte du lecteur ou une reprise automatique) : adapte la longueur au rythme naturel d'un roman co-écrit — ni trop court ni trop long, en général 1 à 3 paragraphes. Fais avancer UN moment de la scène, avec une vraie ambiance, puis arrête-toi pour laisser la main au lecteur ; ne conclus jamais la scène à sa place.
+Pour répondre à une consigne qui demande un développement (ex : décrire en détail un personnage ou un lieu, résumer, faire le point) : prends tout l'espace nécessaire pour être complet et satisfaisant, sans te limiter artificiellement.
 TERMINE TOUJOURS PAR UNE PHRASE COMPLÈTE. Ne coupe jamais un mot ou une phrase en plein milieu. Si tu approches de ta limite, conclus proprement ta phrase en cours avant de t'arrêter.
 
 ═══ DEUX TYPES DE MESSAGES ═══
@@ -477,11 +476,31 @@ Tu écris uniquement le roman (ou la réponse à une consigne), avec le balisage
 
 /* ═══════════ API CALL with fallback ═══════════ */
 const MODELS_ORDER=['gemini-2.5-flash-lite','gemini-2.5-flash','gemini-2.0-flash'];
+// Si la réponse a été coupée par la limite de tokens, recoupe proprement à la dernière phrase complète
+function trimIncomplete(t){
+  let s=t.replace(/\s+$/,'');
+  // Un balisage ~...~ ou **...** resté ouvert est forcément incomplet : on le retire
+  if((s.match(/~/g)||[]).length%2===1)s=s.slice(0,s.lastIndexOf('~'));
+  if((s.match(/\*\*/g)||[]).length%2===1)s=s.slice(0,s.lastIndexOf('**'));
+  s=s.replace(/\s+$/,'');
+  if(/[.!?…]["'»~*]*$/.test(s))return s;
+  let idx=-1;
+  for(let i=s.length-1;i>=0;i--){if('.!?…'.includes(s[i])){idx=i;break}}
+  if(idx===-1){
+    // Aucune phrase complète du tout : on recoupe à la dernière virgule plutôt que de garder un fragment brut
+    const ci=s.lastIndexOf(', ');
+    return ci>0?s.slice(0,ci)+'…':s;
+  }
+  let end=idx+1;
+  while(end<s.length&&/["'»~*]/.test(s[end]))end++;
+  return s.slice(0,end);
+}
 async function callGemini(msg,hidden,blockType){
   current.history.push({role:'user',text:msg,hidden:!!hidden,blockType:blockType||null});
   current.updated=Date.now();saveLib();
   const contents=current.history.map(m=>({role:m.role,parts:[{text:m.text}]}));
-  const maxTok={court:400,moyen:800,long:1300}[current.length||'court'];
+  // Une consigne (ex: décrire un personnage) peut demander un long développement — on lui laisse beaucoup plus de marge
+  const maxTok=blockType==='note'?2200:900;
   const sys=buildSys();
 
   async function tryModel(mdl){
@@ -503,8 +522,12 @@ async function callGemini(msg,hidden,blockType){
     }
     if(r.ok){
       const j=await r.json();
-      const t=j.candidates?.[0]?.content?.parts?.[0]?.text;
-      if(t){current.history.push({role:'model',text:t,hidden:false});current.updated=Date.now();saveLib();return t}
+      const cand=j.candidates?.[0];
+      let t=cand?.content?.parts?.[0]?.text;
+      if(t){
+        if(cand.finishReason==='MAX_TOKENS')t=trimIncomplete(t);
+        current.history.push({role:'model',text:t,hidden:false});current.updated=Date.now();saveLib();return t;
+      }
       lastDetail='réponse vide';continue;
     }
     lastStatus=r.status;
@@ -550,7 +573,6 @@ function scrollDown(){const p=document.getElementById('pages');p.scrollTop=p.scr
 /* ═══════════ SETTINGS PILLS ═══════════ */
 document.getElementById('gg').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;document.querySelectorAll('#gg .pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');current.genre=b.dataset.g;updateSub();saveLib()});
 document.getElementById('pv').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;document.querySelectorAll('#pv .pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');current.pov=b.dataset.p;updateSub();saveLib()});
-document.getElementById('len').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;document.querySelectorAll('#len .pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');current.length=b.dataset.l;saveLib()});
 document.getElementById('model').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;document.querySelectorAll('#model .pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');model=b.dataset.mdl;localStorage.setItem(K.model,model)});
 document.getElementById('title-input').addEventListener('input',function(){current.title=this.value;document.getElementById('s-title').textContent=this.value||'Sans titre';document.getElementById('h-title').textContent=this.value||'Roman';saveLib()});
 function updateSub(){document.getElementById('s-sub').textContent=current.genre+' · '+current.pov}
@@ -630,6 +652,26 @@ document.getElementById('places').addEventListener('click',e=>{
   else if(del){current.places.splice(+del.dataset.del,1);renderPlaces();saveLib()}
 });
 
+/* ═══════════ SAVE (manuel + confirmation visuelle) ═══════════ */
+let saveFlashTimer=null;
+function flashSave(ok){
+  const btn=document.getElementById('save-btn');
+  clearTimeout(saveFlashTimer);
+  btn.classList.remove('saved','save-err');
+  void btn.offsetWidth; // relance l'animation même si elle vient de tourner
+  if(ok){btn.classList.add('saved');btn.textContent='✓ Enregistré';}
+  else{btn.classList.add('save-err');btn.textContent='⚠ Échec de l\'enregistrement';}
+  saveFlashTimer=setTimeout(()=>{btn.classList.remove('saved','save-err');btn.textContent='💾 Enregistrer';},1700);
+}
+document.getElementById('save-btn').addEventListener('click',()=>{
+  if(current)current.updated=Date.now();
+  const ok=saveLib();
+  flashSave(ok);
+  if(!ok)alert('L\'enregistrement a échoué. Le stockage de ton navigateur est peut-être plein ou bloqué (navigation privée ?). Exporte ton roman pour ne rien perdre.');
+});
+// Filet de sécurité : tente une dernière sauvegarde si l'onglet se ferme
+window.addEventListener('beforeunload',()=>{if(current)current.updated=Date.now();saveLib()});
+
 /* ═══════════ EXPORT ═══════════ */
 document.getElementById('export-btn').addEventListener('click',()=>{
   const parts=current.history.filter(m=>!m.hidden&&m.blockType!=='note');
@@ -655,7 +697,6 @@ function setLoad(v){loading=v;document.getElementById('typing').classList.toggle
 function showStory(){document.getElementById('welcome').style.display='none';document.getElementById('story').style.display='block';
   document.getElementById('s-title').textContent=current.title||'Sans titre';
   document.getElementById('h-title').textContent=current.title||'Roman en cours';updateSub()}
-function bumpProgress(){const n=current.history.filter(m=>!m.hidden).length;document.getElementById('pbar').style.width=Math.min(95,12+n*6)+'%'}
 function handleErr(e){const [c,d]=(e.message||'').split(':');
   if(c==='CLE'){alert('Clé API invalide ou restreinte.'+(d?'\n\n'+d:''));showSetup()}
   else if(c==='QUOTA'){const div=addBlock('⏳ Limite quotidienne Gemini atteinte sur tous les modèles gratuits. Elle se réinitialise vers 9h (heure de Paris). Tu peux réessayer plus tard.','note')}
@@ -665,7 +706,7 @@ function handleErr(e){const [c,d]=(e.message||'').split(':');
 }
 let lastSend=null;
 async function retryLast(){if(!lastSend)return;const {apiMsg,vis}=lastSend;setLoad(true);
-  try{const r=await callGemini(apiMsg,!vis,vis?vis.who:null);addBlock(r,'ai');bumpProgress()}catch(e){handleErr(e)}setLoad(false)}
+  try{const r=await callGemini(apiMsg,!vis,vis?vis.who:null);addBlock(r,'ai')}catch(e){handleErr(e)}setLoad(false)}
 
 async function send(){
   if(loading||!current)return;
@@ -679,7 +720,7 @@ async function send(){
   lastSend={apiMsg,vis};
   if(vis)addBlock(vis.txt,vis.who);
   setLoad(true);
-  try{const r=await callGemini(apiMsg,!vis,vis?vis.who:null);addBlock(r,'ai');bumpProgress()}
+  try{const r=await callGemini(apiMsg,!vis,vis?vis.who:null);addBlock(r,'ai')}
   catch(e){handleErr(e)}
   setLoad(false);
 }
