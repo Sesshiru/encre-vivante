@@ -297,7 +297,7 @@ textarea#rules-input:focus,input#title-input:focus{border-color:var(--accent)}
 
   <div class="sec">
     <div class="sec-label">Règles de l'univers <span class="sub">Décris le monde, l'époque, le lieu, des habitudes de langage… l'IA les suivra.</span></div>
-    <textarea id="rules-input" class="eform" style="height:100px;resize:none" placeholder="Ex : L'histoire se déroule au Japon actuel. Utilise quelques mots japonais avec leur sens (senpai, arigato…). Le personnage de Kenji parle de façon très formelle et vouvoie tout le monde."></textarea>
+    <textarea id="rules-input" class="eform" style="height:190px;resize:vertical" placeholder="Ex : L'histoire se déroule au Japon actuel. Utilise quelques mots japonais avec leur sens (senpai, arigato…). Le personnage de Kenji parle de façon très formelle et vouvoie tout le monde."></textarea>
   </div>
 
   <div class="sec">
@@ -486,8 +486,8 @@ function buildSys(){
   return `Tu es un véritable romancier francophone. Tu co-écris un roman avec le lecteur : il écrit une partie, tu enchaînes la suite comme deux auteurs qui se relaient. Tu ne dis jamais "en tant qu'IA", tu ne commentes jamais hors récit.
 
 ═══ LONGUEUR ═══
-Pour la suite du roman (après un texte du lecteur ou une reprise automatique) : adapte la longueur au rythme naturel d'un roman co-écrit — ni trop court ni trop long, en général 1 à 3 paragraphes. Fais avancer UN moment de la scène, avec une vraie ambiance, puis arrête-toi pour laisser la main au lecteur ; ne conclus jamais la scène à sa place.
-Pour répondre à une consigne qui demande un développement (ex : décrire en détail un personnage ou un lieu, résumer, faire le point) : prends tout l'espace nécessaire pour être complet et satisfaisant, sans te limiter artificiellement.
+Pour la suite du roman (après un texte du lecteur ou une reprise automatique) : écris un passage long et développé, plusieurs paragraphes riches (3 à 6), comme un vrai chapitre qui avance vraiment. Ne te limite pas artificiellement en longueur. Arrête-toi seulement à un moment naturel de pause dans la scène — jamais en concluant l'histoire ou la scène entière à la place du lecteur.
+Pour répondre à une consigne (ex : décrire en détail un personnage ou un lieu, résumer, faire le point) : prends tout l'espace nécessaire pour être complet et satisfaisant, sans te limiter.
 TERMINE TOUJOURS PAR UNE PHRASE COMPLÈTE. Ne coupe jamais un mot ou une phrase en plein milieu. Si tu approches de ta limite, conclus proprement ta phrase en cours avant de t'arrêter.
 
 ═══ DEUX TYPES DE MESSAGES ═══
@@ -547,8 +547,8 @@ async function callGemini(msg,hidden,blockType){
   current.history.push({role:'user',text:msg,hidden:!!hidden,blockType:blockType||null});
   current.updated=Date.now();saveLib();
   const contents=current.history.map(m=>({role:m.role,parts:[{text:m.text}]}));
-  // Une consigne (ex: décrire un personnage) peut demander un long développement — on lui laisse beaucoup plus de marge
-  const maxTok=blockType==='note'?2200:900;
+  // La suite du roman comme les consignes peuvent demander un long développement — grande marge dans les deux cas
+  const maxTok=blockType==='note'?2400:1800;
   const sys=buildSys();
 
   async function tryModel(mdl){
