@@ -271,7 +271,7 @@ textarea#rules-input:focus,input#title-input:focus{border-color:var(--accent)}
       <button class="pill active" data-mdl="gemini-2.5-flash-lite">Flash-Lite ·  ~1000/j</button>
       <button class="pill" data-mdl="gemini-2.5-flash">Flash · qualité +</button>
     </div>
-    <div class="quota-note">La limite quotidienne est fixée par Google (pas par l'app) et se réinitialise chaque nuit (9h heure de Paris). Flash-Lite offre le plus de requêtes gratuites.</div>
+    <div class="quota-note">La limite quotidienne est fixée par Google (pas par l'app) et se réinitialise chaque nuit (9h heure de Paris). Flash-Lite offre le plus de requêtes gratuites. En cas de limite atteinte, l'app bascule automatiquement sur jusqu'à 4 modèles gratuits différents (chacun a son propre quota) avant d'afficher une erreur.</div>
   </div>
 
   <div class="sec">
@@ -486,7 +486,7 @@ function buildSys(){
   return `Tu es un véritable romancier francophone. Tu co-écris un roman avec le lecteur : il écrit une partie, tu enchaînes la suite comme deux auteurs qui se relaient. Tu ne dis jamais "en tant qu'IA", tu ne commentes jamais hors récit.
 
 ═══ LONGUEUR ═══
-Pour la suite du roman (après un texte du lecteur ou une reprise automatique) : écris un passage long et développé, plusieurs paragraphes riches (3 à 6), comme un vrai chapitre qui avance vraiment. Ne te limite pas artificiellement en longueur. Arrête-toi seulement à un moment naturel de pause dans la scène — jamais en concluant l'histoire ou la scène entière à la place du lecteur.
+Pour la suite du roman (après un texte du lecteur ou une reprise automatique) : écris un passage LONG et richement développé — vise généralement 700 à 1200 mots, quitte à aller au-delà si la scène le demande. Plusieurs paragraphes construits comme un vrai chapitre qui avance vraiment (action, dialogue, description, intériorité), jamais un simple résumé de deux phrases. Ne te limite pas artificiellement en longueur. Arrête-toi seulement à un moment naturel de pause dans la scène — jamais en concluant l'histoire ou la scène entière à la place du lecteur.
 Pour répondre à une consigne (ex : décrire en détail un personnage ou un lieu, résumer, faire le point) : prends tout l'espace nécessaire pour être complet et satisfaisant, sans te limiter.
 TERMINE TOUJOURS PAR UNE PHRASE COMPLÈTE. Ne coupe jamais un mot ou une phrase en plein milieu. Si tu approches de ta limite, conclus proprement ta phrase en cours avant de t'arrêter.
 
@@ -523,7 +523,7 @@ Tu écris uniquement le roman (ou la réponse à une consigne), avec le balisage
 }
 
 /* ═══════════ API CALL with fallback ═══════════ */
-const MODELS_ORDER=['gemini-2.5-flash-lite','gemini-2.5-flash','gemini-2.0-flash'];
+const MODELS_ORDER=['gemini-2.5-flash-lite','gemini-2.5-flash','gemini-2.0-flash','gemini-2.0-flash-lite'];
 // Si la réponse a été coupée par la limite de tokens, recoupe proprement à la dernière phrase complète
 function trimIncomplete(t){
   let s=t.replace(/\s+$/,'');
@@ -548,7 +548,7 @@ async function callGemini(msg,hidden,blockType){
   current.updated=Date.now();saveLib();
   const contents=current.history.map(m=>({role:m.role,parts:[{text:m.text}]}));
   // La suite du roman comme les consignes peuvent demander un long développement — grande marge dans les deux cas
-  const maxTok=blockType==='note'?2400:1800;
+  const maxTok=blockType==='note'?3200:2800;
   const sys=buildSys();
 
   async function tryModel(mdl){
