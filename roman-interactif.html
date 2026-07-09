@@ -140,13 +140,13 @@ header{display:flex;align-items:center;gap:0.4rem;padding:max(0.7rem,env(safe-ar
 .pill.active{background:var(--ink);color:var(--bg)}
 .entity-list{display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.5rem}
 .ent{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:0.7rem 0.9rem;position:relative}
-.ent-name{font-family:'Fraunces',serif;font-weight:600;font-size:0.95rem}
+.ent-name{font-family:'Fraunces',serif;font-weight:600;font-size:0.95rem;padding-right:5.2rem}
 .ent.char .ent-name{color:var(--char)}
 .ent.place .ent-name{color:var(--desc)}
 .ent-role{font-size:0.64rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint);margin-top:0.1rem}
 .ent-desc{font-size:0.76rem;color:var(--ink-soft);margin-top:0.35rem;line-height:1.45}
-.ent-actions{position:absolute;top:0.55rem;right:0.7rem;display:flex;gap:0.2rem}
-.ent-actions button{background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:0.85rem;padding:3px 5px;border-radius:6px}
+.ent-actions{position:absolute;top:0.5rem;right:0.5rem;display:flex;gap:0.1rem}
+.ent-actions button{background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:1.15rem;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:8px}
 .ent-actions button:active{background:var(--bg-soft)}
 .ent-edit:active{color:var(--accent)!important}
 .ent-del:active{color:#c0453a!important}
@@ -157,6 +157,8 @@ header{display:flex;align-items:center;gap:0.4rem;padding:max(0.7rem,env(safe-ar
 .eform input:focus,.eform textarea:focus{border-color:var(--accent)}
 .eform textarea{resize:none;height:72px;line-height:1.4}
 .eform select option{background:var(--card)}
+textarea#rules-input,input#title-input{font-family:'Inter',sans-serif;color:var(--ink);line-height:1.5}
+textarea#rules-input:focus,input#title-input:focus{border-color:var(--accent)}
 .frow{display:flex;gap:0.5rem}
 .f-ok{flex:1;background:var(--you);color:#fff;border:none;border-radius:10px;padding:0.6rem;font-size:0.82rem;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif}
 .f-cl{flex:1;background:var(--bg-soft);color:var(--ink-soft);border:none;border-radius:10px;padding:0.6rem;font-size:0.82rem;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif}
@@ -294,6 +296,11 @@ header{display:flex;align-items:center;gap:0.4rem;padding:max(0.7rem,env(safe-ar
   </div>
 
   <div class="sec">
+    <div class="sec-label">Règles de l'univers <span class="sub">Décris le monde, l'époque, le lieu, des habitudes de langage… l'IA les suivra.</span></div>
+    <textarea id="rules-input" class="eform" style="height:100px;resize:none" placeholder="Ex : L'histoire se déroule au Japon actuel. Utilise quelques mots japonais avec leur sens (senpai, arigato…). Le personnage de Kenji parle de façon très formelle et vouvoie tout le monde."></textarea>
+  </div>
+
+  <div class="sec">
     <button class="submenu-btn" id="open-chars">
       <span class="submenu-label">👤 Personnages</span>
       <span class="submenu-count" id="chars-count">0</span>
@@ -377,7 +384,7 @@ function saveLib(){
 
 function newStory(){
   return {id:'s'+Date.now()+Math.random().toString(36).slice(2,6),
-    title:'',genre:'Fantaisie',pov:'Troisième personne',
+    title:'',genre:'Fantaisie',pov:'Troisième personne',rules:'',
     chars:[],places:[],history:[],started:false,updated:Date.now()};
 }
 
@@ -445,6 +452,7 @@ function openStory(id){
   current=library.find(s=>s.id===id);if(!current)return;
   // sync settings pills
   document.getElementById('title-input').value=current.title||'';
+  document.getElementById('rules-input').value=current.rules||'';
   document.querySelectorAll('#gg .pill').forEach(b=>b.classList.toggle('active',b.dataset.g===current.genre));
   document.querySelectorAll('#pv .pill').forEach(b=>b.classList.toggle('active',b.dataset.p===current.pov));
   document.querySelectorAll('#model .pill').forEach(b=>b.classList.toggle('active',b.dataset.mdl===model));
@@ -474,6 +482,7 @@ function buildSys(){
   const st=current;
   const cl=st.chars.length?st.chars.map(c=>`- ${c.name} (${c.role})${c.desc?' : '+c.desc:''}`).join('\n'):'- Aucun personnage défini (n\'en invente pas sans consigne claire).';
   const pl=st.places.length?st.places.map(p=>`- ${p.name}${p.desc?' : '+p.desc:''}`).join('\n'):'- Aucun lieu défini pour l\'instant.';
+  const rulesBlock=st.rules&&st.rules.trim()?`\n═══ RÈGLES DE L'UNIVERS (impératif — priment sur tout le reste) ═══\n${st.rules.trim()}\n`:'';
   return `Tu es un véritable romancier francophone. Tu co-écris un roman avec le lecteur : il écrit une partie, tu enchaînes la suite comme deux auteurs qui se relaient. Tu ne dis jamais "en tant qu'IA", tu ne commentes jamais hors récit.
 
 ═══ LONGUEUR ═══
@@ -497,6 +506,7 @@ Chaque réplique parlée commence par un tiret cadratin « — » sur SA PROPRE 
 **Elyan** s'immobilisa.
 — Je sais. Pardon.
 
+${rulesBlock}
 GENRE : ${st.genre}
 POINT DE VUE (strict) : ${st.pov}
 
@@ -613,6 +623,7 @@ document.getElementById('gg').addEventListener('click',e=>{const b=e.target.clos
 document.getElementById('pv').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;document.querySelectorAll('#pv .pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');current.pov=b.dataset.p;updateSub();saveLib()});
 document.getElementById('model').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;document.querySelectorAll('#model .pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');model=b.dataset.mdl;localStorage.setItem(K.model,model)});
 document.getElementById('title-input').addEventListener('input',function(){current.title=this.value;document.getElementById('s-title').textContent=this.value||'Sans titre';document.getElementById('h-title').textContent=this.value||'Roman';saveLib()});
+document.getElementById('rules-input').addEventListener('input',function(){current.rules=this.value;saveLib()});
 function updateSub(){document.getElementById('s-sub').textContent=current.genre+' · '+current.pov}
 
 function openSheet(){document.getElementById('overlay').classList.add('on');document.getElementById('sheet').classList.add('on')}
