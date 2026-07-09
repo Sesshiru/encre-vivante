@@ -171,6 +171,16 @@ header{display:flex;align-items:center;gap:0.4rem;padding:max(0.7rem,env(safe-ar
 @keyframes save-pop{0%{transform:scale(1)}45%{transform:scale(1.06)}100%{transform:scale(1)}}
 .save-btn.saved,.save-btn.save-err{animation:save-pop .35s ease}
 .save-hint{font-size:0.68rem;color:var(--ink-faint);text-align:center;margin:-0.2rem 0 0.8rem}
+.submenu-btn{width:100%;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:0.8rem 0.9rem;display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-family:'Inter',sans-serif;font-size:0.88rem;color:var(--ink);text-align:left}
+.submenu-btn:active{border-color:var(--accent)}
+.submenu-label{flex:1;font-weight:500}
+.submenu-count{background:var(--bg-soft);color:var(--ink-soft);font-size:0.72rem;font-weight:600;padding:0.15rem 0.55rem;border-radius:10px}
+.submenu-arrow{color:var(--ink-faint);font-size:1.1rem}
+/* SUB-SHEETS (personnages / lieux) — au-dessus de la fiche de réglages */
+#chars-overlay,#places-overlay{z-index:60}
+.subsheet{z-index:61}
+.subsheet-head{display:flex;align-items:center;gap:0.5rem;margin:-0.3rem 0 1rem}
+.subsheet-title{font-family:'Fraunces',serif;font-weight:600;font-size:1.05rem}
 </style>
 </head>
 <body>
@@ -284,15 +294,19 @@ header{display:flex;align-items:center;gap:0.4rem;padding:max(0.7rem,env(safe-ar
   </div>
 
   <div class="sec">
-    <div class="sec-label">Personnages</div>
-    <div id="chars" class="entity-list"></div>
-    <div id="cform-area"><button class="add" id="add-char">＋ Ajouter un personnage</button></div>
+    <button class="submenu-btn" id="open-chars">
+      <span class="submenu-label">👤 Personnages</span>
+      <span class="submenu-count" id="chars-count">0</span>
+      <span class="submenu-arrow">›</span>
+    </button>
   </div>
 
   <div class="sec">
-    <div class="sec-label">Lieux</div>
-    <div id="places" class="entity-list"></div>
-    <div id="pform-area"><button class="add" id="add-place">＋ Ajouter un lieu</button></div>
+    <button class="submenu-btn" id="open-places">
+      <span class="submenu-label">📍 Lieux</span>
+      <span class="submenu-count" id="places-count">0</span>
+      <span class="submenu-arrow">›</span>
+    </button>
   </div>
 
   <div class="sec">
@@ -314,6 +328,30 @@ header{display:flex;align-items:center;gap:0.4rem;padding:max(0.7rem,env(safe-ar
       <button class="f-cl" id="change-key">🔑 Clé API</button>
     </div>
   </div>
+</div>
+
+<!-- CHARACTERS SUB-SHEET -->
+<div class="overlay" id="chars-overlay"></div>
+<div class="sheet subsheet" id="chars-sheet">
+  <div class="handle"></div>
+  <div class="subsheet-head">
+    <button class="h-btn" id="chars-back">‹</button>
+    <div class="subsheet-title">Personnages</div>
+  </div>
+  <div id="chars" class="entity-list"></div>
+  <div id="cform-area"><button class="add" id="add-char">＋ Ajouter un personnage</button></div>
+</div>
+
+<!-- PLACES SUB-SHEET -->
+<div class="overlay" id="places-overlay"></div>
+<div class="sheet subsheet" id="places-sheet">
+  <div class="handle"></div>
+  <div class="subsheet-head">
+    <button class="h-btn" id="places-back">‹</button>
+    <div class="subsheet-title">Lieux</div>
+  </div>
+  <div id="places" class="entity-list"></div>
+  <div id="pform-area"><button class="add" id="add-place">＋ Ajouter un lieu</button></div>
 </div>
 
 <script>
@@ -582,9 +620,22 @@ function closeSheet(){document.getElementById('overlay').classList.remove('on');
 document.getElementById('settings-btn').addEventListener('click',openSheet);
 document.getElementById('overlay').addEventListener('click',closeSheet);
 
+/* ═══════════ SOUS-MENUS Personnages / Lieux ═══════════ */
+function openCharsSheet(){document.getElementById('chars-overlay').classList.add('on');document.getElementById('chars-sheet').classList.add('on')}
+function closeCharsSheet(){document.getElementById('chars-overlay').classList.remove('on');document.getElementById('chars-sheet').classList.remove('on')}
+document.getElementById('open-chars').addEventListener('click',openCharsSheet);
+document.getElementById('chars-back').addEventListener('click',closeCharsSheet);
+document.getElementById('chars-overlay').addEventListener('click',closeCharsSheet);
+function openPlacesSheet(){document.getElementById('places-overlay').classList.add('on');document.getElementById('places-sheet').classList.add('on')}
+function closePlacesSheet(){document.getElementById('places-overlay').classList.remove('on');document.getElementById('places-sheet').classList.remove('on')}
+document.getElementById('open-places').addEventListener('click',openPlacesSheet);
+document.getElementById('places-back').addEventListener('click',closePlacesSheet);
+document.getElementById('places-overlay').addEventListener('click',closePlacesSheet);
+
 /* ═══════════ ENTITIES (chars + places) with EDIT ═══════════ */
 function renderChars(){
   const l=document.getElementById('chars');l.innerHTML='';
+  document.getElementById('chars-count').textContent=current.chars.length;
   current.chars.forEach((c,i)=>{
     const d=document.createElement('div');d.className='ent char';
     d.innerHTML=`<div class="ent-name">${esc(c.name)}</div><div class="ent-role">${esc(c.role)}</div>${c.desc?`<div class="ent-desc">${esc(c.desc)}</div>`:''}
@@ -594,6 +645,7 @@ function renderChars(){
 }
 function renderPlaces(){
   const l=document.getElementById('places');l.innerHTML='';
+  document.getElementById('places-count').textContent=current.places.length;
   current.places.forEach((p,i)=>{
     const d=document.createElement('div');d.className='ent place';
     d.innerHTML=`<div class="ent-name">${esc(p.name)}</div>${p.desc?`<div class="ent-desc">${esc(p.desc)}</div>`:''}
