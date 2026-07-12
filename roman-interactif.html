@@ -134,11 +134,11 @@ header{display:flex;align-items:center;gap:0.4rem;padding:max(0.7rem,env(safe-ar
 .img-thumb button{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.55);color:#fff;border:none;width:20px;height:20px;border-radius:50%;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .blk-imgs{display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.55rem}
 .blk-imgs img{width:76px;height:76px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
-/* Passages IA repliables */
-.blk-roman{position:relative;padding-right:1.9rem}
-.blk-toggle{position:absolute;top:-2px;right:-6px;background:none;border:none;color:var(--ink-faint);width:34px;height:34px;cursor:pointer;font-size:0.85rem;border-radius:8px;display:flex;align-items:center;justify-content:center}
-.blk-toggle:active{background:var(--bg-soft);color:var(--accent)}
+/* Passages IA repliables (bouton en fin de passage) */
+.blk-toggle{display:flex;align-items:center;gap:0.35rem;background:none;border:none;color:var(--ink-faint);cursor:pointer;font-family:'Inter',sans-serif;font-size:0.74rem;font-weight:500;padding:0.45rem 0.3rem;margin-top:0.4rem;border-radius:8px}
+.blk-toggle:active{color:var(--accent);background:var(--bg-soft)}
 .blk-roman.collapsed .blk-body{display:none}
+.blk-roman.collapsed .blk-toggle{display:none}
 .blk-collapsed-hint{display:none;color:var(--ink-faint);font-family:'Inter',sans-serif;font-size:0.78rem;font-style:italic;cursor:pointer;padding:0.15rem 0}
 .blk-roman.collapsed .blk-collapsed-hint{display:block}
 /* Images des personnages / lieux */
@@ -496,7 +496,7 @@ function openStory(id){
     });
     // Replie les passages IA déjà lus, sauf le dernier — évite de scroller des kilomètres
     const romans=document.querySelectorAll('#blocks .blk-roman');
-    romans.forEach((r,i)=>{if(i<romans.length-1){r.classList.add('collapsed');r.querySelector('.blk-toggle').textContent='▸'}});
+    romans.forEach((r,i)=>{if(i<romans.length-1)r.classList.add('collapsed')});
   }else{
     document.getElementById('welcome').style.display='';
     document.getElementById('story').style.display='none';
@@ -653,19 +653,17 @@ function markup(raw){
 function addBlock(txt,who,images){
   const b=document.getElementById('blocks');const div=document.createElement('div');div.className='blk';
   const im=images&&images.length?'<div class="blk-imgs">'+images.map(d=>`<img src="${d}">`).join('')+'</div>':'';
-  if(who==='ai')div.innerHTML='<div class="blk-roman"><button class="blk-toggle" title="Replier / déplier ce passage">▾</button><div class="blk-body">'+markup(txt)+'</div><div class="blk-collapsed-hint">… passage replié — appuie pour le relire</div></div>';
+  if(who==='ai')div.innerHTML='<div class="blk-roman"><div class="blk-body">'+markup(txt)+'</div><button class="blk-toggle" title="Replier ce passage">▴ Replier ce passage</button><div class="blk-collapsed-hint">… passage replié — appuie pour le relire</div></div>';
   else if(who==='you')div.innerHTML='<div class="blk-you"><span class="tag">Vous · ajout</span><div class="txt">'+esc(txt)+'</div>'+im+'</div>';
   else if(who==='note')div.innerHTML='<div class="blk-consigne"><span class="tag">Vous · consigne</span><div class="txt">'+esc(txt)+'</div>'+im+'</div>';
   b.appendChild(div);scrollDown();return div;
 }
 function scrollDown(){const p=document.getElementById('pages');p.scrollTop=p.scrollHeight}
-// Replier / déplier un passage IA (flèche en haut à droite, ou clic sur la ligne repliée)
+// Replier / déplier un passage IA (bouton en fin de passage, ou clic sur la ligne repliée)
 document.getElementById('blocks').addEventListener('click',e=>{
   const t=e.target.closest('.blk-toggle'),h=e.target.closest('.blk-collapsed-hint');
   if(!t&&!h)return;
-  const r=(t||h).closest('.blk-roman');
-  const col=r.classList.toggle('collapsed');
-  r.querySelector('.blk-toggle').textContent=col?'▸':'▾';
+  (t||h).closest('.blk-roman').classList.toggle('collapsed');
 });
 
 /* ═══════════ SETTINGS PILLS ═══════════ */
