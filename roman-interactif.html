@@ -125,6 +125,15 @@ header{display:flex;align-items:center;gap:0.4rem;padding:max(0.7rem,env(safe-ar
 .send{background:var(--ink);color:var(--bg);border:none;width:40px;height:40px;border-radius:12px;cursor:pointer;font-size:1rem;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .send:disabled{opacity:.3}
 .hint{font-size:0.65rem;color:var(--ink-faint);text-align:center;margin-top:0.45rem}
+.attach{background:none;border:none;color:var(--ink-faint);width:40px;height:40px;border-radius:12px;cursor:pointer;font-size:1.15rem;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.attach:active{color:var(--accent);background:var(--bg-soft)}
+.img-strip{display:none;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.5rem}
+.img-strip.on{display:flex}
+.img-thumb{position:relative;width:56px;height:56px;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.img-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.img-thumb button{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.55);color:#fff;border:none;width:20px;height:20px;border-radius:50%;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.blk-imgs{display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.55rem}
+.blk-imgs img{width:76px;height:76px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
 
 /* SHEET */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50;display:none}
@@ -246,10 +255,13 @@ textarea#rules-input:focus,input#title-input:focus{border-color:var(--accent)}
         <button class="mtab active" data-m="ecrire">✍︎ J'écris</button>
         <button class="mtab" data-m="consigne">✦ Consigne</button>
       </div>
+      <div class="img-strip" id="img-strip"></div>
       <div class="input-box">
+        <button class="attach" id="attach" title="Joindre une image de référence">📷</button>
         <textarea id="uinput" rows="1" placeholder="Écrivez la suite de l'histoire…"></textarea>
         <button class="send" id="send">↑</button>
       </div>
+      <input type="file" id="img-file" accept="image/*" multiple style="display:none">
       <div class="hint" id="hint">Champ vide + envoyer = l'IA continue seule</div>
     </div>
   </div>
@@ -275,7 +287,7 @@ textarea#rules-input:focus,input#title-input:focus{border-color:var(--accent)}
   </div>
 
   <div class="sec">
-    <div class="sec-label">Genre / ambiance</div>
+    <div class="sec-label">Genre / ambiance <span class="sub">Plusieurs genres possibles — appuie pour activer/désactiver.</span></div>
     <div class="pills" id="gg">
       <button class="pill active" data-g="Fantaisie">Fantaisie</button>
       <button class="pill" data-g="Thriller">Thriller</button>
@@ -384,9 +396,11 @@ function saveLib(){
 
 function newStory(){
   return {id:'s'+Date.now()+Math.random().toString(36).slice(2,6),
-    title:'',genre:'Fantaisie',pov:'Troisième personne',rules:'',
+    title:'',genres:['Fantaisie'],pov:'Troisième personne',rules:'',
     chars:[],places:[],history:[],started:false,updated:Date.now()};
 }
+// Compat : les anciennes histoires ont un champ genre (string), les nouvelles un tableau genres
+function genresOf(st){return st.genres&&st.genres.length?st.genres:(st.genre?[st.genre]:['Fantaisie'])}
 
 /* ═══════════ THEME ═══════════ */
 function applyTheme(t){document.documentElement.setAttribute('data-theme',t);
@@ -428,7 +442,7 @@ function renderLib(){
     const started=st.history.some(m=>!m.hidden);
     return `<div class="scard" data-id="${st.id}">
       <div class="scard-title">${esc(st.title||'Sans titre')}</div>
-      <div class="scard-meta">${esc(st.genre)} · ${timeAgo(st.updated)}</div>
+      <div class="scard-meta">${esc(genresOf(st).join(' + '))} · ${timeAgo(st.updated)}</div>
       <div class="scard-excerpt">${esc(storyExcerpt(st))}</div>
       <div class="scard-continue">${started?'Continuer →':'Commencer →'}</div>
       <button class="scard-x" data-del="${st.id}">🗑</button>
@@ -453,7 +467,7 @@ function openStory(id){
   // sync settings pills
   document.getElementById('title-input').value=current.title||'';
   document.getElementById('rules-input').value=current.rules||'';
-  document.querySelectorAll('#gg .pill').forEach(b=>b.classList.toggle('active',b.dataset.g===current.genre));
+  document.querySelectorAll('#gg .pill').forEach(b=>b.classList.toggle('active',genresOf(current).includes(b.dataset.g)));
   document.querySelectorAll('#pv .pill').forEach(b=>b.classList.toggle('active',b.dataset.p===current.pov));
   document.querySelectorAll('#model .pill').forEach(b=>b.classList.toggle('active',b.dataset.mdl===model));
   renderChars();renderPlaces();updateSub();
@@ -467,7 +481,7 @@ function openStory(id){
       let clean=m.text;const nl=clean.indexOf('\n');
       if(clean.startsWith('[')&&nl!==-1)clean=clean.slice(nl+1);
       if(clean.startsWith('Consigne : '))clean=clean.slice(11);
-      addBlock(clean,m.blockType==='note'?'note':'you');
+      addBlock(clean,m.blockType==='note'?'note':'you',m.images);
     });
   }else{
     document.getElementById('welcome').style.display='';
@@ -507,7 +521,7 @@ Chaque réplique parlée commence par un tiret cadratin « — » sur SA PROPRE 
 — Je sais. Pardon.
 
 ${rulesBlock}
-GENRE : ${st.genre}
+GENRE : ${genresOf(st).join(' + ')}${genresOf(st).length>1?' — mélange ces genres de façon équilibrée dans le récit':''}
 POINT DE VUE (strict) : ${st.pov}
 
 PERSONNAGES :
@@ -543,10 +557,15 @@ function trimIncomplete(t){
   while(end<s.length&&/["'»~*]/.test(s[end]))end++;
   return s.slice(0,end);
 }
-async function callGemini(msg,hidden,blockType){
-  current.history.push({role:'user',text:msg,hidden:!!hidden,blockType:blockType||null});
+async function callGemini(msg,hidden,blockType,images){
+  current.history.push({role:'user',text:msg,hidden:!!hidden,blockType:blockType||null,images:images&&images.length?images:undefined});
   current.updated=Date.now();saveLib();
-  const contents=current.history.map(m=>({role:m.role,parts:[{text:m.text}]}));
+  const contents=current.history.map(m=>{
+    const parts=[];
+    if(m.images)m.images.forEach(d=>{const c=d.indexOf(',');parts.push({inline_data:{mime_type:d.slice(5,d.indexOf(';')),data:d.slice(c+1)}})});
+    parts.push({text:m.text});
+    return {role:m.role,parts};
+  });
   // La suite du roman comme les consignes peuvent demander un long développement — grande marge dans les deux cas
   const maxTok=blockType==='note'?3200:2800;
   const sys=buildSys();
@@ -609,22 +628,29 @@ function markup(raw){
     return '<p>'+h+'</p>';
   }).join('');
 }
-function addBlock(txt,who){
+function addBlock(txt,who,images){
   const b=document.getElementById('blocks');const div=document.createElement('div');div.className='blk';
+  const im=images&&images.length?'<div class="blk-imgs">'+images.map(d=>`<img src="${d}">`).join('')+'</div>':'';
   if(who==='ai')div.innerHTML='<div class="blk-roman">'+markup(txt)+'</div>';
-  else if(who==='you')div.innerHTML='<div class="blk-you"><span class="tag">Vous · ajout</span><div class="txt">'+esc(txt)+'</div></div>';
-  else if(who==='note')div.innerHTML='<div class="blk-consigne"><span class="tag">Vous · consigne</span><div class="txt">'+esc(txt)+'</div></div>';
+  else if(who==='you')div.innerHTML='<div class="blk-you"><span class="tag">Vous · ajout</span><div class="txt">'+esc(txt)+'</div>'+im+'</div>';
+  else if(who==='note')div.innerHTML='<div class="blk-consigne"><span class="tag">Vous · consigne</span><div class="txt">'+esc(txt)+'</div>'+im+'</div>';
   b.appendChild(div);scrollDown();return div;
 }
 function scrollDown(){const p=document.getElementById('pages');p.scrollTop=p.scrollHeight}
 
 /* ═══════════ SETTINGS PILLS ═══════════ */
-document.getElementById('gg').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;document.querySelectorAll('#gg .pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');current.genre=b.dataset.g;updateSub();saveLib()});
+document.getElementById('gg').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;
+  let g=genresOf(current).slice();
+  if(b.classList.contains('active')){
+    if(g.length<=1)return; // toujours au moins un genre
+    g=g.filter(x=>x!==b.dataset.g);b.classList.remove('active');
+  }else{g.push(b.dataset.g);b.classList.add('active')}
+  current.genres=g;delete current.genre;updateSub();saveLib()});
 document.getElementById('pv').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;document.querySelectorAll('#pv .pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');current.pov=b.dataset.p;updateSub();saveLib()});
 document.getElementById('model').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;document.querySelectorAll('#model .pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');model=b.dataset.mdl;localStorage.setItem(K.model,model)});
 document.getElementById('title-input').addEventListener('input',function(){current.title=this.value;document.getElementById('s-title').textContent=this.value||'Sans titre';document.getElementById('h-title').textContent=this.value||'Roman';saveLib()});
 document.getElementById('rules-input').addEventListener('input',function(){current.rules=this.value;saveLib()});
-function updateSub(){document.getElementById('s-sub').textContent=current.genre+' · '+current.pov}
+function updateSub(){document.getElementById('s-sub').textContent=genresOf(current).join(' + ')+' · '+current.pov}
 
 function openSheet(){document.getElementById('overlay').classList.add('on');document.getElementById('sheet').classList.add('on')}
 function closeSheet(){document.getElementById('overlay').classList.remove('on');document.getElementById('sheet').classList.remove('on')}
@@ -754,6 +780,38 @@ document.getElementById('mode-tabs').addEventListener('click',e=>{const b=e.targ
   else{inp.placeholder='Écrivez la suite de l\'histoire…';hint.textContent='Champ vide + envoyer = l\'IA continue seule'}
 });
 
+/* ═══════════ IMAGES JOINTES ═══════════ */
+let pendingImages=[];
+document.getElementById('attach').addEventListener('click',()=>document.getElementById('img-file').click());
+document.getElementById('img-file').addEventListener('change',async function(){
+  for(const f of this.files){
+    if(pendingImages.length>=3){alert('3 images maximum par message.');break}
+    try{pendingImages.push(await shrinkImage(f))}catch(e){alert('Impossible de lire cette image.')}
+  }
+  this.value='';renderImgStrip();
+});
+// Réduit et compresse l'image (max 1024px, JPEG) pour l'API et le stockage local
+function shrinkImage(file){return new Promise((res,rej)=>{
+  const img=new Image();const url=URL.createObjectURL(file);
+  img.onload=()=>{URL.revokeObjectURL(url);
+    const max=1024;let w=img.width,h=img.height;
+    if(w>max||h>max){const r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r)}
+    const c=document.createElement('canvas');c.width=w;c.height=h;
+    c.getContext('2d').drawImage(img,0,0,w,h);
+    res(c.toDataURL('image/jpeg',0.82));};
+  img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('image'))};
+  img.src=url;
+})}
+function renderImgStrip(){
+  const s=document.getElementById('img-strip');
+  s.classList.toggle('on',pendingImages.length>0);
+  s.innerHTML=pendingImages.map((d,i)=>`<div class="img-thumb"><img src="${d}"><button data-ri="${i}">✕</button></div>`).join('');
+}
+document.getElementById('img-strip').addEventListener('click',e=>{
+  const b=e.target.closest('[data-ri]');if(!b)return;
+  pendingImages.splice(+b.dataset.ri,1);renderImgStrip();
+});
+
 /* ═══════════ SEND ═══════════ */
 let loading=false;
 function setLoad(v){loading=v;document.getElementById('typing').classList.toggle('on',v);document.getElementById('send').disabled=v;if(v)scrollDown()}
@@ -768,22 +826,25 @@ function handleErr(e){const [c,d]=(e.message||'').split(':');
     btn.onclick=()=>{div.remove();retryLast()};div.querySelector('.blk-consigne').appendChild(btn)}
 }
 let lastSend=null;
-async function retryLast(){if(!lastSend)return;const {apiMsg,vis}=lastSend;setLoad(true);
-  try{const r=await callGemini(apiMsg,!vis,vis?vis.who:null);addBlock(r,'ai')}catch(e){handleErr(e)}setLoad(false)}
+async function retryLast(){if(!lastSend)return;const {apiMsg,vis,images}=lastSend;setLoad(true);
+  try{const r=await callGemini(apiMsg,!vis,vis?vis.who:null,images);addBlock(r,'ai')}catch(e){handleErr(e)}setLoad(false)}
 
 async function send(){
   if(loading||!current)return;
   const inp=document.getElementById('uinput');const txt=inp.value.trim();
+  const imgs=pendingImages.slice();
   if(!current.started)showStory();
   current.started=true;current.updated=Date.now();saveLib();
   let apiMsg,vis=null;
-  if(mode==='consigne'&&txt){apiMsg=`[CONSIGNE — pas du texte de roman. Suis cette instruction, adapte la suite, ne la recopie pas.]\nConsigne : ${txt}`;vis={txt,who:'note'};inp.value='';inp.style.height='auto'}
-  else if(txt){apiMsg=`[TEXTE DU LECTEUR — intègre-le au roman tel quel, puis enchaîne la suite dans le même style.]\n${txt}`;vis={txt,who:'you'};inp.value='';inp.style.height='auto'}
+  if(mode==='consigne'&&txt){apiMsg=`[CONSIGNE — pas du texte de roman. Suis cette instruction, adapte la suite, ne la recopie pas.]\nConsigne : ${txt}`;vis={txt,who:'note',images:imgs};inp.value='';inp.style.height='auto'}
+  else if(txt){apiMsg=`[TEXTE DU LECTEUR — intègre-le au roman tel quel, puis enchaîne la suite dans le même style.]\n${txt}`;vis={txt,who:'you',images:imgs};inp.value='';inp.style.height='auto'}
+  else if(imgs.length){apiMsg='[CONSIGNE — pas du texte de roman.]\nConsigne : Ces images sont des références visuelles (personnage, lieu, ambiance…). Inspire-t\'en fidèlement pour les descriptions et la suite du roman.';vis={txt:'Images de référence pour le roman',who:'note',images:imgs}}
   else{apiMsg=current.history.length===0?"(Interne, ne pas répéter) Commence le roman : premières pages, installe l'atmosphère, présente les personnages et lieux établis, suis la charte et le balisage.":"(Interne, ne pas répéter) Continue le roman là où il s'est arrêté, en respectant tout ce qui précède, la charte et le balisage."}
-  lastSend={apiMsg,vis};
-  if(vis)addBlock(vis.txt,vis.who);
+  pendingImages=[];renderImgStrip();
+  lastSend={apiMsg,vis,images:imgs};
+  if(vis)addBlock(vis.txt,vis.who,vis.images);
   setLoad(true);
-  try{const r=await callGemini(apiMsg,!vis,vis?vis.who:null);addBlock(r,'ai')}
+  try{const r=await callGemini(apiMsg,!vis,vis?vis.who:null,imgs);addBlock(r,'ai')}
   catch(e){handleErr(e)}
   setLoad(false);
 }
