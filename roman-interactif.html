@@ -134,6 +134,17 @@ header{display:flex;align-items:center;gap:0.4rem;padding:max(0.7rem,env(safe-ar
 .img-thumb button{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.55);color:#fff;border:none;width:20px;height:20px;border-radius:50%;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .blk-imgs{display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.55rem}
 .blk-imgs img{width:76px;height:76px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+/* Passages IA repliables */
+.blk-roman{position:relative;padding-right:1.9rem}
+.blk-toggle{position:absolute;top:-2px;right:-6px;background:none;border:none;color:var(--ink-faint);width:34px;height:34px;cursor:pointer;font-size:0.85rem;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.blk-toggle:active{background:var(--bg-soft);color:var(--accent)}
+.blk-roman.collapsed .blk-body{display:none}
+.blk-collapsed-hint{display:none;color:var(--ink-faint);font-family:'Inter',sans-serif;font-size:0.78rem;font-style:italic;cursor:pointer;padding:0.15rem 0}
+.blk-roman.collapsed .blk-collapsed-hint{display:block}
+/* Images des personnages / lieux */
+.ent-img{width:52px;height:52px;object-fit:cover;border-radius:8px;float:left;margin:0.1rem 0.65rem 0.3rem 0;border:1px solid var(--line)}
+.eimg-row{display:flex;align-items:center;gap:0.5rem}
+.eimg-prev{width:52px;height:52px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
 
 /* SHEET */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50;display:none}
@@ -483,6 +494,9 @@ function openStory(id){
       if(clean.startsWith('Consigne : '))clean=clean.slice(11);
       addBlock(clean,m.blockType==='note'?'note':'you',m.images);
     });
+    // Replie les passages IA déjà lus, sauf le dernier — évite de scroller des kilomètres
+    const romans=document.querySelectorAll('#blocks .blk-roman');
+    romans.forEach((r,i)=>{if(i<romans.length-1){r.classList.add('collapsed');r.querySelector('.blk-toggle').textContent='▸'}});
   }else{
     document.getElementById('welcome').style.display='';
     document.getElementById('story').style.display='none';
@@ -500,8 +514,8 @@ function buildSys(){
   return `Tu es un véritable romancier francophone. Tu co-écris un roman avec le lecteur : il écrit une partie, tu enchaînes la suite comme deux auteurs qui se relaient. Tu ne dis jamais "en tant qu'IA", tu ne commentes jamais hors récit.
 
 ═══ LONGUEUR ═══
-Pour la suite du roman (après un texte du lecteur ou une reprise automatique) : écris un passage LONG et richement développé — vise généralement 700 à 1200 mots, quitte à aller au-delà si la scène le demande. Plusieurs paragraphes construits comme un vrai chapitre qui avance vraiment (action, dialogue, description, intériorité), jamais un simple résumé de deux phrases. Ne te limite pas artificiellement en longueur. Arrête-toi seulement à un moment naturel de pause dans la scène — jamais en concluant l'histoire ou la scène entière à la place du lecteur.
-Pour répondre à une consigne (ex : décrire en détail un personnage ou un lieu, résumer, faire le point) : prends tout l'espace nécessaire pour être complet et satisfaisant, sans te limiter.
+Pour la suite du roman (après un texte du lecteur ou une reprise automatique) : écris un CHAPITRE ENTIER, très long et richement développé — vise 1500 à 2500 mots à chaque fois. C'est une exigence ferme : jamais moins de 1000 mots. Enchaîne plusieurs scènes ou moments complets (action, dialogues fournis, descriptions, intériorité des personnages), fais réellement progresser l'intrigue en profondeur. Ne te limite JAMAIS en longueur. Arrête-toi sur un moment ouvert qui invite le lecteur à poursuivre — jamais en concluant l'histoire entière à sa place.
+Pour répondre à une consigne (ex : décrire en détail un personnage ou un lieu, résumer, faire le point) : prends tout l'espace nécessaire pour être exhaustif et satisfaisant, sans te limiter.
 TERMINE TOUJOURS PAR UNE PHRASE COMPLÈTE. Ne coupe jamais un mot ou une phrase en plein milieu. Si tu approches de ta limite, conclus proprement ta phrase en cours avant de t'arrêter.
 
 ═══ DEUX TYPES DE MESSAGES ═══
@@ -529,6 +543,7 @@ ${cl}
 
 LIEUX :
 ${pl}
+${st.chars.some(c=>c.img)||st.places.some(p=>p.img)?'\nDes IMAGES DE RÉFÉRENCE de certains personnages/lieux sont jointes au dernier message (étiquetées [Référence visuelle : …]). Respecte fidèlement leur apparence dans toutes tes descriptions.':''}
 
 ═══ CHARTE ═══
 Écris comme un auteur publié : fluide, immersif, sans robotique ni répétitions ; varie la longueur des phrases ; montre les émotions plutôt que de les nommer. Développe les scènes importantes, donne une vraie ambiance (les cinq sens quand pertinent). Respecte intégralement personnalité, âge et vécu des personnages ; pas de changement de comportement sans raison. Dialogues naturels avec silences, hésitations, gestes. Respecte tout ce qui a été établi (événements, blessures, secrets, relations, chronologie). Respecte strictement le point de vue : ne révèle pas les pensées qu'il ne permet pas de connaître.
@@ -560,14 +575,21 @@ function trimIncomplete(t){
 async function callGemini(msg,hidden,blockType,images){
   current.history.push({role:'user',text:msg,hidden:!!hidden,blockType:blockType||null,images:images&&images.length?images:undefined});
   current.updated=Date.now();saveLib();
-  const contents=current.history.map(m=>{
+  // Images de référence des personnages/lieux : jointes au dernier message pour que l'IA les voie à chaque tour
+  const toPart=d=>{const c=d.indexOf(',');return {inline_data:{mime_type:d.slice(5,d.indexOf(';')),data:d.slice(c+1)}}};
+  const refs=[];
+  current.chars.forEach(c=>{if(c.img)refs.push({label:'Personnage — '+c.name,img:c.img})});
+  current.places.forEach(p=>{if(p.img)refs.push({label:'Lieu — '+p.name,img:p.img})});
+  const contents=current.history.map((m,i)=>{
     const parts=[];
-    if(m.images)m.images.forEach(d=>{const c=d.indexOf(',');parts.push({inline_data:{mime_type:d.slice(5,d.indexOf(';')),data:d.slice(c+1)}})});
+    if(i===current.history.length-1)refs.forEach(r=>{parts.push({text:`[Référence visuelle : ${r.label}]`});parts.push(toPart(r.img))});
+    if(m.images)m.images.forEach(d=>parts.push(toPart(d)));
     parts.push({text:m.text});
     return {role:m.role,parts};
   });
-  // La suite du roman comme les consignes peuvent demander un long développement — grande marge dans les deux cas
-  const maxTok=blockType==='note'?3200:2800;
+  // Plafond au maximum : la limite gratuite Google compte les requêtes, pas les mots,
+  // donc des réponses très longues étirent le quota quotidien (8192 = max de gemini-2.0-flash)
+  const maxTok=8000;
   const sys=buildSys();
 
   async function tryModel(mdl){
@@ -631,12 +653,20 @@ function markup(raw){
 function addBlock(txt,who,images){
   const b=document.getElementById('blocks');const div=document.createElement('div');div.className='blk';
   const im=images&&images.length?'<div class="blk-imgs">'+images.map(d=>`<img src="${d}">`).join('')+'</div>':'';
-  if(who==='ai')div.innerHTML='<div class="blk-roman">'+markup(txt)+'</div>';
+  if(who==='ai')div.innerHTML='<div class="blk-roman"><button class="blk-toggle" title="Replier / déplier ce passage">▾</button><div class="blk-body">'+markup(txt)+'</div><div class="blk-collapsed-hint">… passage replié — appuie pour le relire</div></div>';
   else if(who==='you')div.innerHTML='<div class="blk-you"><span class="tag">Vous · ajout</span><div class="txt">'+esc(txt)+'</div>'+im+'</div>';
   else if(who==='note')div.innerHTML='<div class="blk-consigne"><span class="tag">Vous · consigne</span><div class="txt">'+esc(txt)+'</div>'+im+'</div>';
   b.appendChild(div);scrollDown();return div;
 }
 function scrollDown(){const p=document.getElementById('pages');p.scrollTop=p.scrollHeight}
+// Replier / déplier un passage IA (flèche en haut à droite, ou clic sur la ligne repliée)
+document.getElementById('blocks').addEventListener('click',e=>{
+  const t=e.target.closest('.blk-toggle'),h=e.target.closest('.blk-collapsed-hint');
+  if(!t&&!h)return;
+  const r=(t||h).closest('.blk-roman');
+  const col=r.classList.toggle('collapsed');
+  r.querySelector('.blk-toggle').textContent=col?'▸':'▾';
+});
 
 /* ═══════════ SETTINGS PILLS ═══════════ */
 document.getElementById('gg').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;
@@ -675,7 +705,7 @@ function renderChars(){
   document.getElementById('chars-count').textContent=current.chars.length;
   current.chars.forEach((c,i)=>{
     const d=document.createElement('div');d.className='ent char';
-    d.innerHTML=`<div class="ent-name">${esc(c.name)}</div><div class="ent-role">${esc(c.role)}</div>${c.desc?`<div class="ent-desc">${esc(c.desc)}</div>`:''}
+    d.innerHTML=`${c.img?`<img class="ent-img" src="${c.img}">`:''}<div class="ent-name">${esc(c.name)}</div><div class="ent-role">${esc(c.role)}</div>${c.desc?`<div class="ent-desc">${esc(c.desc)}</div>`:''}
       <div class="ent-actions"><button class="ent-edit" data-edit="${i}">✎</button><button class="ent-del" data-del="${i}">✕</button></div>`;
     l.appendChild(d);
   });
@@ -685,7 +715,7 @@ function renderPlaces(){
   document.getElementById('places-count').textContent=current.places.length;
   current.places.forEach((p,i)=>{
     const d=document.createElement('div');d.className='ent place';
-    d.innerHTML=`<div class="ent-name">${esc(p.name)}</div>${p.desc?`<div class="ent-desc">${esc(p.desc)}</div>`:''}
+    d.innerHTML=`${p.img?`<img class="ent-img" src="${p.img}">`:''}<div class="ent-name">${esc(p.name)}</div>${p.desc?`<div class="ent-desc">${esc(p.desc)}</div>`:''}
       <div class="ent-actions"><button class="ent-edit" data-edit="${i}">✎</button><button class="ent-del" data-del="${i}">✕</button></div>`;
     l.appendChild(d);
   });
@@ -696,15 +726,34 @@ let charFormOpen=false;
 function charForm(idx){
   charFormOpen=true;
   const c=idx!=null?current.chars[idx]:{name:'',role:'Protagoniste',desc:''};
+  let imgData=c.img||'';
   const roles=['Protagoniste','Antagoniste','Allié','Mystérieux','Mentor','Secondaire'];
   document.getElementById('cform-area').innerHTML=`<div class="eform">
     <input id="cn" placeholder="Nom" maxlength="40" value="${esc(c.name)}">
     <select id="cr">${roles.map(r=>`<option${r===c.role?' selected':''}>${r}</option>`).join('')}</select>
     <textarea id="cd" placeholder="Personnalité, âge, vécu, façon de parler, apparence…">${esc(c.desc)}</textarea>
+    <div class="eimg-row">
+      <img id="ci-prev" class="eimg-prev" src="${imgData}" style="display:${imgData?'block':'none'}">
+      <button type="button" class="f-cl" id="ci-btn" style="flex:1">📷 ${imgData?'Changer l\'image':'Ajouter une image'}</button>
+      <button type="button" class="f-cl" id="ci-del" style="flex:0 0 auto;display:${imgData?'':'none'}">✕</button>
+    </div>
     <div class="frow"><button class="f-ok" id="cok">${idx!=null?'Enregistrer':'Ajouter'}</button><button class="f-cl" id="ccl">Annuler</button></div>
   </div>`;
+  document.getElementById('ci-btn').onclick=()=>{
+    const f=document.createElement('input');f.type='file';f.accept='image/*';
+    f.onchange=async()=>{if(!f.files[0])return;
+      try{imgData=await shrinkImage(f.files[0],640);
+        const p=document.getElementById('ci-prev');p.src=imgData;p.style.display='block';
+        document.getElementById('ci-del').style.display='';
+        document.getElementById('ci-btn').textContent='📷 Changer l\'image';
+      }catch(e){alert('Impossible de lire cette image.')}};
+    f.click();};
+  document.getElementById('ci-del').onclick=()=>{imgData='';
+    document.getElementById('ci-prev').style.display='none';
+    document.getElementById('ci-del').style.display='none';
+    document.getElementById('ci-btn').textContent='📷 Ajouter une image';};
   document.getElementById('cok').onclick=()=>{const n=document.getElementById('cn').value.trim();if(!n)return;
-    const obj={name:n,role:document.getElementById('cr').value,desc:document.getElementById('cd').value.trim()};
+    const obj={name:n,role:document.getElementById('cr').value,desc:document.getElementById('cd').value.trim(),img:imgData||undefined};
     if(idx!=null)current.chars[idx]=obj;else current.chars.push(obj);
     renderChars();saveLib();closeCharForm()};
   document.getElementById('ccl').onclick=closeCharForm;
@@ -722,13 +771,32 @@ let placeFormOpen=false;
 function placeForm(idx){
   placeFormOpen=true;
   const p=idx!=null?current.places[idx]:{name:'',desc:''};
+  let imgData=p.img||'';
   document.getElementById('pform-area').innerHTML=`<div class="eform">
     <input id="pn" placeholder="Nom du lieu" maxlength="40" value="${esc(p.name)}">
     <textarea id="pd" placeholder="Ambiance, apparence, sons, odeurs, histoire du lieu…">${esc(p.desc)}</textarea>
+    <div class="eimg-row">
+      <img id="pi-prev" class="eimg-prev" src="${imgData}" style="display:${imgData?'block':'none'}">
+      <button type="button" class="f-cl" id="pi-btn" style="flex:1">📷 ${imgData?'Changer l\'image':'Ajouter une image'}</button>
+      <button type="button" class="f-cl" id="pi-del" style="flex:0 0 auto;display:${imgData?'':'none'}">✕</button>
+    </div>
     <div class="frow"><button class="f-ok" id="pok">${idx!=null?'Enregistrer':'Ajouter'}</button><button class="f-cl" id="pcl">Annuler</button></div>
   </div>`;
+  document.getElementById('pi-btn').onclick=()=>{
+    const f=document.createElement('input');f.type='file';f.accept='image/*';
+    f.onchange=async()=>{if(!f.files[0])return;
+      try{imgData=await shrinkImage(f.files[0],640);
+        const pr=document.getElementById('pi-prev');pr.src=imgData;pr.style.display='block';
+        document.getElementById('pi-del').style.display='';
+        document.getElementById('pi-btn').textContent='📷 Changer l\'image';
+      }catch(e){alert('Impossible de lire cette image.')}};
+    f.click();};
+  document.getElementById('pi-del').onclick=()=>{imgData='';
+    document.getElementById('pi-prev').style.display='none';
+    document.getElementById('pi-del').style.display='none';
+    document.getElementById('pi-btn').textContent='📷 Ajouter une image';};
   document.getElementById('pok').onclick=()=>{const n=document.getElementById('pn').value.trim();if(!n)return;
-    const obj={name:n,desc:document.getElementById('pd').value.trim()};
+    const obj={name:n,desc:document.getElementById('pd').value.trim(),img:imgData||undefined};
     if(idx!=null)current.places[idx]=obj;else current.places.push(obj);
     renderPlaces();saveLib();closePlaceForm()};
   document.getElementById('pcl').onclick=closePlaceForm;
@@ -790,11 +858,12 @@ document.getElementById('img-file').addEventListener('change',async function(){
   }
   this.value='';renderImgStrip();
 });
-// Réduit et compresse l'image (max 1024px, JPEG) pour l'API et le stockage local
-function shrinkImage(file){return new Promise((res,rej)=>{
+// Réduit et compresse l'image (JPEG) pour l'API et le stockage local
+function shrinkImage(file,max){return new Promise((res,rej)=>{
+  max=max||1024;
   const img=new Image();const url=URL.createObjectURL(file);
   img.onload=()=>{URL.revokeObjectURL(url);
-    const max=1024;let w=img.width,h=img.height;
+    let w=img.width,h=img.height;
     if(w>max||h>max){const r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r)}
     const c=document.createElement('canvas');c.width=w;c.height=h;
     c.getContext('2d').drawImage(img,0,0,w,h);
