@@ -198,9 +198,21 @@ textarea#rules-input:focus,input#title-input:focus{border-color:var(--accent)}
 .submenu-label{flex:1;font-weight:500}
 .submenu-count{background:var(--bg-soft);color:var(--ink-soft);font-size:0.72rem;font-weight:600;padding:0.15rem 0.55rem;border-radius:10px}
 .submenu-arrow{color:var(--ink-faint);font-size:1.1rem}
-/* SUB-SHEETS (personnages / lieux) — au-dessus de la fiche de réglages */
-#chars-overlay,#places-overlay{z-index:60}
+/* SUB-SHEETS (personnages / lieux / thèmes) — au-dessus de la fiche de réglages */
+#chars-overlay,#places-overlay,#themes-overlay{z-index:60}
 .subsheet{z-index:61}
+/* Thèmes — catégories repliables */
+.tcat{border-bottom:1px solid var(--line)}
+.tcat:last-child{border-bottom:none}
+.tcat-head{display:flex;align-items:center;justify-content:space-between;padding:0.95rem 0.1rem;cursor:pointer;-webkit-user-select:none;user-select:none}
+.tcat-title{font-weight:600;font-size:0.95rem}
+.tcat-right{display:flex;align-items:center;gap:0.5rem}
+.tcat-count{background:var(--accent);color:#fff;font-size:0.68rem;font-weight:600;min-width:20px;height:20px;padding:0 6px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.tcat-arrow{color:var(--ink-faint);font-size:1rem;transition:transform .25s;display:inline-block}
+.tcat.open .tcat-arrow{transform:rotate(180deg)}
+.tcat-body{display:none;flex-wrap:wrap;gap:0.4rem;padding:0.1rem 0 1.1rem}
+.tcat.open .tcat-body{display:flex}
+.themes-hint{color:var(--ink-faint);font-size:0.72rem;line-height:1.5;margin-bottom:0.4rem}
 .subsheet-head{display:flex;align-items:center;gap:0.5rem;margin:-0.3rem 0 1rem}
 .subsheet-title{font-family:'Fraunces',serif;font-weight:600;font-size:1.05rem}
 </style>
@@ -311,6 +323,14 @@ textarea#rules-input:focus,input#title-input:focus{border-color:var(--accent)}
   </div>
 
   <div class="sec">
+    <button class="submenu-btn" id="open-themes">
+      <span class="submenu-label">🏷 Thèmes &amp; tropes</span>
+      <span class="submenu-count" id="themes-count">0</span>
+      <span class="submenu-arrow">›</span>
+    </button>
+  </div>
+
+  <div class="sec">
     <div class="sec-label">Point de vue narratif</div>
     <div class="pills" id="pv">
       <button class="pill active" data-p="Troisième personne">3ᵉ personne</button>
@@ -384,6 +404,18 @@ textarea#rules-input:focus,input#title-input:focus{border-color:var(--accent)}
   <div id="pform-area"><button class="add" id="add-place">＋ Ajouter un lieu</button></div>
 </div>
 
+<!-- THEMES SUB-SHEET -->
+<div class="overlay" id="themes-overlay"></div>
+<div class="sheet subsheet" id="themes-sheet">
+  <div class="handle"></div>
+  <div class="subsheet-head">
+    <button class="h-btn" id="themes-back">‹</button>
+    <div class="subsheet-title">Tous les thèmes</div>
+  </div>
+  <p class="themes-hint">Choisis autant de thèmes que tu veux — l'IA les tissera dans l'histoire. Appuie sur une catégorie pour l'ouvrir.</p>
+  <div id="themes-list"></div>
+</div>
+
 <script>
 /* ═══════════ STORAGE ═══════════ */
 const K={api:'ev_gemini_key',lib:'ev_library_v1',theme:'ev_theme',model:'ev_model'};
@@ -407,11 +439,26 @@ function saveLib(){
 
 function newStory(){
   return {id:'s'+Date.now()+Math.random().toString(36).slice(2,6),
-    title:'',genres:['Fantaisie'],pov:'Troisième personne',rules:'',
+    title:'',genres:['Fantaisie'],themes:[],pov:'Troisième personne',rules:'',
     chars:[],places:[],history:[],started:false,updated:Date.now()};
 }
 // Compat : les anciennes histoires ont un champ genre (string), les nouvelles un tableau genres
 function genresOf(st){return st.genres&&st.genres.length?st.genres:(st.genre?[st.genre]:['Fantaisie'])}
+// Compat : les histoires créées avant la mise à jour n'ont pas de champ themes
+function themesOf(st){return st.themes||[]}
+
+/* ═══════════ CATALOGUE DES THÈMES ═══════════ */
+const THEMES=[
+ {cat:'Sous-genre',items:['Romance','Comédie romantique','Fantastique','Paranormal','Dark','Érotique','Mature','LGBTQ','Action & Aventure','Milliardaires','Bureau','Crime & mystère','Dystopique','Love in Uniform','Histoires de sport','Mafia','Nouvel adulte & université','Noël & fêtes','Petites Villes','Propre et sain','Romance grande taille','Sagas familiales','Thriller','Westerns']},
+ {cat:'Type de relation',items:['Ennemis à amants','Ami·es à amants','Meilleur ami du frère','Compagnons destinés','Compagnon rejeté','Amour non réciproque',"Coup d'un soir",'Deuxième chance','Fausses relations','Frères et sœurs par alliance','Grumpy X Sunshine',"Les opposés s'attirent",'Mariage arrangé','Premier amour','Protecteur','Proximité forcée','Romance "bully"','Romance interdite','Slow Burn','Triangle amoureux','Âme sœur réticente',"Écart d'âge"]},
+ {cat:'Type de personnage',items:['Alpha','Milliardaire','Bad boy','Prince & royauté','Célébrité','Sportif','Militaire','Médecin','Professeur','Patron / Boss','Cowboy','Mafieux','Garde du corps','Père célibataire','Mère célibataire','Nounou','Vampire','Loup-garou','Métamorphe','Dragon','Démon','Ange','Fae','Sorcière','Alien']},
+ {cat:'Spice',items:['Chaud','Très chaud','BDSM','Plan à trois','Harem','Harem inversé','Polyamour']},
+ {cat:'Tropes',items:['Grossesse surprise','Bébé secret','Amnésie','Identité secrète','Un seul lit','Coincés ensemble','Retour dans sa ville natale','Mariage de convenance','Vengeance','Rédemption','Trahison','Secret de famille','Riche et pauvre','Chantage','Course contre la montre','Élu·e de la prophétie']},
+ {cat:'Ton',items:['Léger & drôle','Feel-good','Émotionnel','Angst','Sombre','Dramatique','Doux-amer','Suspense','Réconfortant','Tragique']},
+ {cat:'Diversité des personnages',items:['LGBTQ+','Héroïne forte','Personnages racisés','Personnages plus size','Handicap','Neuroatypique','Santé mentale','Personnages âgés','Cultures du monde']},
+ {cat:'Cadre',items:['Petite ville','Grande ville','Campagne','Bord de mer','Île','Montagne','Ranch','Château','Université','Bureau','Hôpital','Caserne','Royaume fantastique','Espace','Post-apocalyptique']},
+ {cat:'Époque',items:['Contemporain','Historique','Régence','Médiéval','Victorien','Années folles','Années 80-90','Futuriste','Uchronie']}
+];
 
 /* ═══════════ THEME ═══════════ */
 function applyTheme(t){document.documentElement.setAttribute('data-theme',t);
@@ -481,7 +528,7 @@ function openStory(id){
   document.querySelectorAll('#gg .pill').forEach(b=>b.classList.toggle('active',genresOf(current).includes(b.dataset.g)));
   document.querySelectorAll('#pv .pill').forEach(b=>b.classList.toggle('active',b.dataset.p===current.pov));
   document.querySelectorAll('#model .pill').forEach(b=>b.classList.toggle('active',b.dataset.mdl===model));
-  renderChars();renderPlaces();updateSub();
+  renderChars();renderPlaces();renderThemes();updateSub();
   // render story
   document.getElementById('blocks').innerHTML='';
   if(current.started&&current.history.some(m=>!m.hidden)){
@@ -536,7 +583,7 @@ Chaque réplique parlée commence par un tiret cadratin « — » sur SA PROPRE 
 
 ${rulesBlock}
 GENRE : ${genresOf(st).join(' + ')}${genresOf(st).length>1?' — mélange ces genres de façon équilibrée dans le récit':''}
-POINT DE VUE (strict) : ${st.pov}
+${themesOf(st).length?`THÈMES & TROPES CHOISIS PAR LE LECTEUR (tisse-les naturellement et durablement dans l'intrigue et les relations, sans jamais les nommer explicitement) : ${themesOf(st).join(' · ')}\n`:''}POINT DE VUE (strict) : ${st.pov}
 
 PERSONNAGES :
 ${cl}
@@ -678,7 +725,8 @@ document.getElementById('pv').addEventListener('click',e=>{const b=e.target.clos
 document.getElementById('model').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;document.querySelectorAll('#model .pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');model=b.dataset.mdl;localStorage.setItem(K.model,model)});
 document.getElementById('title-input').addEventListener('input',function(){current.title=this.value;document.getElementById('s-title').textContent=this.value||'Sans titre';document.getElementById('h-title').textContent=this.value||'Roman';saveLib()});
 document.getElementById('rules-input').addEventListener('input',function(){current.rules=this.value;saveLib()});
-function updateSub(){document.getElementById('s-sub').textContent=genresOf(current).join(' + ')+' · '+current.pov}
+function updateSub(){const n=themesOf(current).length;
+  document.getElementById('s-sub').textContent=genresOf(current).join(' + ')+' · '+current.pov+(n?' · '+n+' thème'+(n>1?'s':''):'')}
 
 function openSheet(){document.getElementById('overlay').classList.add('on');document.getElementById('sheet').classList.add('on')}
 function closeSheet(){document.getElementById('overlay').classList.remove('on');document.getElementById('sheet').classList.remove('on')}
@@ -696,6 +744,44 @@ function closePlacesSheet(){document.getElementById('places-overlay').classList.
 document.getElementById('open-places').addEventListener('click',openPlacesSheet);
 document.getElementById('places-back').addEventListener('click',closePlacesSheet);
 document.getElementById('places-overlay').addEventListener('click',closePlacesSheet);
+
+/* ═══════════ SOUS-MENU Thèmes ═══════════ */
+function openThemesSheet(){document.getElementById('themes-overlay').classList.add('on');document.getElementById('themes-sheet').classList.add('on')}
+function closeThemesSheet(){document.getElementById('themes-overlay').classList.remove('on');document.getElementById('themes-sheet').classList.remove('on')}
+document.getElementById('open-themes').addEventListener('click',openThemesSheet);
+document.getElementById('themes-back').addEventListener('click',closeThemesSheet);
+document.getElementById('themes-overlay').addEventListener('click',closeThemesSheet);
+
+function updateThemesCount(){document.getElementById('themes-count').textContent=themesOf(current).length}
+// Les libellés peuvent contenir guillemets/apostrophes : on référence par index (data-gi/data-ii) plutôt que par texte
+function renderThemes(){
+  const sel=new Set(themesOf(current));
+  document.getElementById('themes-list').innerHTML=THEMES.map((g,gi)=>{
+    const n=g.items.reduce((a,t)=>a+(sel.has(t)?1:0),0);
+    return `<div class="tcat${gi===0?' open':''}" data-gi="${gi}">
+      <div class="tcat-head"><span class="tcat-title">${esc(g.cat)}</span>
+        <span class="tcat-right"><span class="tcat-count"${n?'':' style="display:none"'}>${n}</span><span class="tcat-arrow">⌄</span></span></div>
+      <div class="tcat-body">${g.items.map((t,ii)=>`<button class="pill${sel.has(t)?' active':''}" data-gi="${gi}" data-ii="${ii}">${esc(t)}</button>`).join('')}</div>
+    </div>`;
+  }).join('');
+  updateThemesCount();
+}
+document.getElementById('themes-list').addEventListener('click',e=>{
+  const pill=e.target.closest('.pill');
+  if(pill){
+    const t=THEMES[+pill.dataset.gi].items[+pill.dataset.ii];
+    let th=themesOf(current).slice();
+    if(pill.classList.contains('active')){th=th.filter(x=>x!==t);pill.classList.remove('active')}
+    else{th.push(t);pill.classList.add('active')}
+    current.themes=th;saveLib();updateThemesCount();updateSub();
+    const cat=pill.closest('.tcat');const sel=new Set(th);
+    const n=THEMES[+cat.dataset.gi].items.reduce((a,x)=>a+(sel.has(x)?1:0),0);
+    const c=cat.querySelector('.tcat-count');c.textContent=n;c.style.display=n?'':'none';
+    return;
+  }
+  const head=e.target.closest('.tcat-head');
+  if(head)head.parentElement.classList.toggle('open');
+});
 
 /* ═══════════ ENTITIES (chars + places) with EDIT ═══════════ */
 function renderChars(){
